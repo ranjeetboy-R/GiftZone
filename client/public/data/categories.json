@@ -1,0 +1,38 @@
+[
+  {
+    "slug": "birthday-gifts",
+    "name": "Birthday Gifts",
+    "image": "/images/categories/birthday.svg",
+    "count": 42
+  },
+  {
+    "slug": "anniversary-gifts",
+    "name": "Anniversary Gifts",
+    "image": "/images/categories/anniversary.svg",
+    "count": 35
+  },
+  {
+    "slug": "corporate-gifts",
+    "name": "Corporate Gifts",
+    "image": "/images/categories/corporate.svg",
+    "count": 28
+  },
+  {
+    "slug": "personalized-gifts",
+    "name": "Personalized Gifts",
+    "image": "/images/categories/personalized.svg",
+    "count": 51
+  },
+  {
+    "slug": "wedding-gifts",
+    "name": "Wedding Gifts",
+    "image": "/images/categories/wedding.svg",
+    "count": 31
+  },
+  {
+    "slug": "festival-gifts",
+    "name": "Festival Gifts",
+    "image": "/images/categories/festival.svg",
+    "count": 46
+  }
+]

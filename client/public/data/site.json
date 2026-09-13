@@ -1,0 +1,103 @@
+{
+  "brand": {
+    "name": "Gift Zone",
+    "tagline": "Gifts for Every Moment",
+    "phone": "+91 98765 43210",
+    "email": "hello@giftzone.in"
+  },
+  "announcement": [
+    "Free Shipping on Orders Above \u20b9999",
+    "Same Day Dispatch on Selected Gifts",
+    "Easy 7-Day Replacement"
+  ],
+  "hero": {
+    "eyebrow": "Thoughtful gifts, beautifully packed",
+    "title": "Make Every Moment More Special",
+    "description": "Discover memorable gifts for birthdays, anniversaries, weddings, festivals and every celebration that matters.",
+    "primaryCta": "Shop Now",
+    "secondaryCta": "Explore Collections"
+  },
+  "categories": [
+    {
+      "slug": "birthday-gifts",
+      "name": "Birthday Gifts",
+      "image": "/images/categories/birthday.svg",
+      "count": 42
+    },
+    {
+      "slug": "anniversary-gifts",
+      "name": "Anniversary Gifts",
+      "image": "/images/categories/anniversary.svg",
+      "count": 35
+    },
+    {
+      "slug": "corporate-gifts",
+      "name": "Corporate Gifts",
+      "image": "/images/categories/corporate.svg",
+      "count": 28
+    },
+    {
+      "slug": "personalized-gifts",
+      "name": "Personalized Gifts",
+      "image": "/images/categories/personalized.svg",
+      "count": 51
+    },
+    {
+      "slug": "wedding-gifts",
+      "name": "Wedding Gifts",
+      "image": "/images/categories/wedding.svg",
+      "count": 31
+    },
+    {
+      "slug": "festival-gifts",
+      "name": "Festival Gifts",
+      "image": "/images/categories/festival.svg",
+      "count": 46
+    }
+  ],
+  "why": [
+    {
+      "title": "Curated With Care",
+      "text": "Gift-worthy products selected for quality and presentation.",
+      "icon": "Heart"
+    },
+    {
+      "title": "Beautiful Packaging",
+      "text": "Every order is packed to feel special when it arrives.",
+      "icon": "Gift"
+    },
+    {
+      "title": "Secure Payments",
+      "text": "Simple manual payment verification with payment proof.",
+      "icon": "ShieldCheck"
+    },
+    {
+      "title": "Helpful Support",
+      "text": "Friendly assistance before and after your purchase.",
+      "icon": "Headphones"
+    }
+  ],
+  "testimonials": [
+    {
+      "name": "Priya Sharma",
+      "city": "Delhi",
+      "rating": 5,
+      "text": "The personalized frame looked even better in person. Packaging was beautiful and delivery was quick.",
+      "image": "/images/avatars/priya.svg"
+    },
+    {
+      "name": "Rohit Verma",
+      "city": "Mumbai",
+      "rating": 5,
+      "text": "The custom mug was exactly what I ordered. Great quality and a very smooth shopping experience.",
+      "image": "/images/avatars/rohit.svg"
+    },
+    {
+      "name": "Sneha Patel",
+      "city": "Ahmedabad",
+      "rating": 5,
+      "text": "Gift Zone made our corporate gifting easy. The team helped us choose the right gifts.",
+      "image": "/images/avatars/sneha.svg"
+    }
+  ]
+}

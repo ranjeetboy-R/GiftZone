@@ -1,0 +1,22 @@
+[
+  {
+    "q": "How long does delivery take?",
+    "a": "Most orders are dispatched within 1\u20132 business days and delivered in around 3\u20137 business days depending on the destination."
+  },
+  {
+    "q": "How do I pay?",
+    "a": "Gift Zone uses manual payment verification in this demo. Pay using the displayed QR/bank details and submit your UTR plus payment screenshot."
+  },
+  {
+    "q": "Can I cancel an order?",
+    "a": "Cancellation is available before the order is shipped. Contact support with your order number."
+  },
+  {
+    "q": "What is the replacement policy?",
+    "a": "Eligible damaged or incorrect products can be reported within 7 days of delivery with clear photos."
+  },
+  {
+    "q": "Do you offer corporate gifting?",
+    "a": "Yes. We offer bulk gifting, custom packaging and assisted selection for companies."
+  }
+]

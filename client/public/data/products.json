@@ -1,0 +1,423 @@
+{
+  "products": [
+    {
+      "id": "photo-frame",
+      "slug": "photo-frame",
+      "name": "Personalized Photo Frame",
+      "category": "Personalized Gifts",
+      "price": 499,
+      "compareAtPrice": 799,
+      "rating": 4.8,
+      "reviews": 124,
+      "stock": 32,
+      "badge": "New Arrival",
+      "image": "/images/products/photo-frame.svg",
+      "images": [
+        "/images/products/photo-frame.svg"
+      ],
+      "description": "Personalized Photo Frame is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "name-mug",
+      "slug": "name-mug",
+      "name": "Custom Name Mug",
+      "category": "Personalized Gifts",
+      "price": 349,
+      "compareAtPrice": 599,
+      "rating": 4.7,
+      "reviews": 98,
+      "stock": 48,
+      "badge": "Best Seller",
+      "image": "/images/products/name-mug.svg",
+      "images": [
+        "/images/products/name-mug.svg"
+      ],
+      "description": "Custom Name Mug is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "gift-hamper",
+      "slug": "gift-hamper",
+      "name": "Premium Gift Hamper",
+      "category": "Birthday Gifts",
+      "price": 1299,
+      "compareAtPrice": 1799,
+      "rating": 4.9,
+      "reviews": 156,
+      "stock": 18,
+      "badge": "Best Seller",
+      "image": "/images/products/gift-hamper.svg",
+      "images": [
+        "/images/products/gift-hamper.svg"
+      ],
+      "description": "Premium Gift Hamper is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "moon-lamp",
+      "slug": "moon-lamp",
+      "name": "LED Moon Lamp",
+      "category": "Birthday Gifts",
+      "price": 799,
+      "compareAtPrice": 1199,
+      "rating": 4.8,
+      "reviews": 87,
+      "stock": 26,
+      "badge": "Trending",
+      "image": "/images/products/moon-lamp.svg",
+      "images": [
+        "/images/products/moon-lamp.svg"
+      ],
+      "description": "LED Moon Lamp is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "wallet",
+      "slug": "wallet",
+      "name": "Stylish Wallet for Men",
+      "category": "Anniversary Gifts",
+      "price": 649,
+      "compareAtPrice": 999,
+      "rating": 4.6,
+      "reviews": 112,
+      "stock": 41,
+      "badge": "Best Seller",
+      "image": "/images/products/wallet.svg",
+      "images": [
+        "/images/products/wallet.svg"
+      ],
+      "description": "Stylish Wallet for Men is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "candle-set",
+      "slug": "candle-set",
+      "name": "Scented Candle Gift Set",
+      "category": "Anniversary Gifts",
+      "price": 599,
+      "compareAtPrice": 899,
+      "rating": 4.7,
+      "reviews": 76,
+      "stock": 35,
+      "badge": "New Arrival",
+      "image": "/images/products/candle-set.svg",
+      "images": [
+        "/images/products/candle-set.svg"
+      ],
+      "description": "Scented Candle Gift Set is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "teddy-bouquet",
+      "slug": "teddy-bouquet",
+      "name": "Teddy & Rose Bouquet",
+      "category": "Birthday Gifts",
+      "price": 899,
+      "compareAtPrice": 1299,
+      "rating": 4.8,
+      "reviews": 64,
+      "stock": 14,
+      "badge": "Trending",
+      "image": "/images/products/gift-hamper.svg",
+      "images": [
+        "/images/products/gift-hamper.svg"
+      ],
+      "description": "Teddy & Rose Bouquet is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "dry-fruit-box",
+      "slug": "dry-fruit-box",
+      "name": "Royal Dry Fruit Box",
+      "category": "Festival Gifts",
+      "price": 1499,
+      "compareAtPrice": 1999,
+      "rating": 4.9,
+      "reviews": 89,
+      "stock": 22,
+      "badge": "Premium",
+      "image": "/images/products/gift-hamper.svg",
+      "images": [
+        "/images/products/gift-hamper.svg"
+      ],
+      "description": "Royal Dry Fruit Box is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "corporate-kit",
+      "slug": "corporate-kit",
+      "name": "Executive Corporate Gift Kit",
+      "category": "Corporate Gifts",
+      "price": 1199,
+      "compareAtPrice": 1699,
+      "rating": 4.7,
+      "reviews": 51,
+      "stock": 60,
+      "badge": "Corporate",
+      "image": "/images/products/gift-hamper.svg",
+      "images": [
+        "/images/products/gift-hamper.svg"
+      ],
+      "description": "Executive Corporate Gift Kit is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "keychain",
+      "slug": "keychain",
+      "name": "Custom Name Keychain",
+      "category": "Personalized Gifts",
+      "price": 249,
+      "compareAtPrice": 399,
+      "rating": 4.5,
+      "reviews": 71,
+      "stock": 120,
+      "badge": "Budget Pick",
+      "image": "/images/products/gift-hamper.svg",
+      "images": [
+        "/images/products/gift-hamper.svg"
+      ],
+      "description": "Custom Name Keychain is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "photo-album",
+      "slug": "photo-album",
+      "name": "Memory Photo Album",
+      "category": "Anniversary Gifts",
+      "price": 899,
+      "compareAtPrice": 1299,
+      "rating": 4.9,
+      "reviews": 93,
+      "stock": 28,
+      "badge": "Best Seller",
+      "image": "/images/products/gift-hamper.svg",
+      "images": [
+        "/images/products/gift-hamper.svg"
+      ],
+      "description": "Memory Photo Album is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "couple-mugs",
+      "slug": "couple-mugs",
+      "name": "Couple Coffee Mugs",
+      "category": "Anniversary Gifts",
+      "price": 549,
+      "compareAtPrice": 799,
+      "rating": 4.6,
+      "reviews": 58,
+      "stock": 44,
+      "badge": "Popular",
+      "image": "/images/products/gift-hamper.svg",
+      "images": [
+        "/images/products/gift-hamper.svg"
+      ],
+      "description": "Couple Coffee Mugs is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "wedding-hamper",
+      "slug": "wedding-hamper",
+      "name": "Wedding Celebration Hamper",
+      "category": "Wedding Gifts",
+      "price": 1799,
+      "compareAtPrice": 2499,
+      "rating": 4.9,
+      "reviews": 43,
+      "stock": 16,
+      "badge": "Premium",
+      "image": "/images/products/gift-hamper.svg",
+      "images": [
+        "/images/products/gift-hamper.svg"
+      ],
+      "description": "Wedding Celebration Hamper is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "plant-gift",
+      "slug": "plant-gift",
+      "name": "Lucky Bamboo Gift Plant",
+      "category": "Corporate Gifts",
+      "price": 699,
+      "compareAtPrice": 999,
+      "rating": 4.6,
+      "reviews": 37,
+      "stock": 52,
+      "badge": "Eco Pick",
+      "image": "/images/products/gift-hamper.svg",
+      "images": [
+        "/images/products/gift-hamper.svg"
+      ],
+      "description": "Lucky Bamboo Gift Plant is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "diya-set",
+      "slug": "diya-set",
+      "name": "Festive Diya Gift Set",
+      "category": "Festival Gifts",
+      "price": 449,
+      "compareAtPrice": 699,
+      "rating": 4.8,
+      "reviews": 102,
+      "stock": 75,
+      "badge": "Festival Pick",
+      "image": "/images/products/gift-hamper.svg",
+      "images": [
+        "/images/products/gift-hamper.svg"
+      ],
+      "description": "Festive Diya Gift Set is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "chocolate-box",
+      "slug": "chocolate-box",
+      "name": "Luxury Chocolate Box",
+      "category": "Birthday Gifts",
+      "price": 749,
+      "compareAtPrice": 999,
+      "rating": 4.7,
+      "reviews": 134,
+      "stock": 39,
+      "badge": "Best Seller",
+      "image": "/images/products/gift-hamper.svg",
+      "images": [
+        "/images/products/gift-hamper.svg"
+      ],
+      "description": "Luxury Chocolate Box is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "desk-organizer",
+      "slug": "desk-organizer",
+      "name": "Personalized Desk Organizer",
+      "category": "Corporate Gifts",
+      "price": 999,
+      "compareAtPrice": 1499,
+      "rating": 4.6,
+      "reviews": 46,
+      "stock": 31,
+      "badge": "New Arrival",
+      "image": "/images/products/gift-hamper.svg",
+      "images": [
+        "/images/products/gift-hamper.svg"
+      ],
+      "description": "Personalized Desk Organizer is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    },
+    {
+      "id": "couple-frame",
+      "slug": "couple-frame",
+      "name": "Couple Name Frame",
+      "category": "Wedding Gifts",
+      "price": 699,
+      "compareAtPrice": 1099,
+      "rating": 4.8,
+      "reviews": 67,
+      "stock": 33,
+      "badge": "Popular",
+      "image": "/images/products/gift-hamper.svg",
+      "images": [
+        "/images/products/gift-hamper.svg"
+      ],
+      "description": "Couple Name Frame is thoughtfully designed for memorable gifting. Beautifully packed and ready to make every special moment brighter.",
+      "features": [
+        "Premium quality materials",
+        "Gift-ready packaging",
+        "Secure protective packing",
+        "Easy replacement support"
+      ]
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "pages": 1,
+    "total": 18
+  }
+}

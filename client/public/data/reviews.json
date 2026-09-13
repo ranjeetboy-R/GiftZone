@@ -1,0 +1,29 @@
+[
+  {
+    "id": "r1",
+    "productId": "photo-frame",
+    "name": "Aarav",
+    "rating": 5,
+    "title": "Beautiful gift",
+    "text": "The print quality and frame finish are excellent.",
+    "date": "2026-08-21"
+  },
+  {
+    "id": "r2",
+    "productId": "photo-frame",
+    "name": "Meera",
+    "rating": 5,
+    "title": "Loved it",
+    "text": "Packaging was secure and the personalization was perfect.",
+    "date": "2026-08-13"
+  },
+  {
+    "id": "r3",
+    "productId": "name-mug",
+    "name": "Kabir",
+    "rating": 4,
+    "title": "Great mug",
+    "text": "Nice quality and the name print is clean.",
+    "date": "2026-08-18"
+  }
+]

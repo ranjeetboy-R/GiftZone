@@ -1,0 +1,1 @@
+{"name":"gift-zone-server","private":true,"type":"module","scripts":{"dev":"nodemon server.js","start":"node server.js"},"dependencies":{"@clerk/express":"latest","cloudinary":"latest","cors":"latest","dotenv":"latest","express":"latest","mongoose":"9.9.5","multer":"latest","jsonwebtoken":"latest"}}

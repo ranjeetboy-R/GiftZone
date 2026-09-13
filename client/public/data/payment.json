@@ -1,0 +1,9 @@
+{
+  "qrImage": "/images/payment/qr-placeholder.svg",
+  "accountName": "Gift Zone",
+  "bankName": "Gift Zone Demo Bank",
+  "accountNumber": "123456789012",
+  "ifsc": "GIFT0000123",
+  "upi": "giftzone@upi",
+  "note": "Demo payment details. Replace these before going live."
+}

@@ -1,0 +1,28 @@
+[
+  {
+    "code": "WELCOME10",
+    "title": "10% off on first order",
+    "type": "percent",
+    "value": 10,
+    "minOrder": 499,
+    "maxDiscount": 250,
+    "active": true
+  },
+  {
+    "code": "GIFT150",
+    "title": "\u20b9150 off on orders above \u20b91499",
+    "type": "fixed",
+    "value": 150,
+    "minOrder": 1499,
+    "active": true
+  },
+  {
+    "code": "FESTIVE20",
+    "title": "20% off festive collection",
+    "type": "percent",
+    "value": 20,
+    "minOrder": 999,
+    "maxDiscount": 300,
+    "active": true
+  }
+]

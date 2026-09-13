@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+:root {
+    --brand: #c92532;
+    --brand-dark: #a91d29;
+    --navy: #0d1a2a;
+    --cream: #fff8f4;
+    --muted: #64748b;
+}
+
+@theme inline {
+  --font-body: var(--font-commissioner);
+  --font-super: var(--font-script);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    background: #ffffff;
+    color: var(--navy);
+    font-family: Arial, Helvetica, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a {
+    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+    cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+}
+
+img {
+    max-width: 100%;
+}
+
+.container-width {
+    width: min(1180px, calc(100% - 40px));
+    margin-inline: auto;
+}
+
+.section-pad {
+    padding-block: 64px;
+}
+
+.brand-gradient {
+    background: linear-gradient(135deg, #b91c2a, #e3414b);
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.hide-scrollbar {
+    scrollbar-width: none;
+}
+
+::selection {
+    background: #f9cdd1;
+    color: var(--navy);
+}
+
+@media (max-width: 640px) {
+    .container-width {
+        width: min(100% - 28px, 1180px);
+    }
+
+    .section-pad {
+        padding-block: 44px;
+    }
+}
+
+@keyframes gift-zone-pulse {
+    0%,
+    100% {
+        opacity: 0.55;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+.skeleton {
+    animation: gift-zone-pulse 1.5s ease-in-out infinite;
+    background: #e2e8f0;
+}
