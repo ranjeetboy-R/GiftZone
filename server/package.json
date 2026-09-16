@@ -1,1 +1,20 @@
-{"name":"gift-zone-server","private":true,"type":"module","scripts":{"dev":"nodemon server.js","start":"node server.js"},"dependencies":{"@clerk/express":"latest","cloudinary":"latest","cors":"latest","dotenv":"latest","express":"latest","mongoose":"9.9.5","multer":"latest","jsonwebtoken":"latest"}}
+{
+  "name": "gift-zone-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@clerk/express": "latest",
+    "cloudinary": "latest",
+    "cookie-parser": "^1.4.7",
+    "cors": "latest",
+    "dotenv": "latest",
+    "express": "latest",
+    "jsonwebtoken": "latest",
+    "mongoose": "9.9.5",
+    "multer": "latest"
+  }
+}

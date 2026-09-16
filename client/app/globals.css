@@ -43,15 +43,6 @@ a {
     cursor: pointer;
 }
 
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-}
-
 img {
     max-width: 100%;
 }
