@@ -1,37 +1,37 @@
 [
   {
     "slug": "birthday-gifts",
-    "name": "Birthday Gifts",
+    "name": "Electronics & Gadgets",
     "image": "/images/categories/birthday.svg",
     "count": 42
   },
   {
     "slug": "anniversary-gifts",
-    "name": "Anniversary Gifts",
+    "name": "Home & Living",
     "image": "/images/categories/anniversary.svg",
     "count": 35
   },
   {
     "slug": "corporate-gifts",
-    "name": "Corporate Gifts",
+    "name": "Office & Work",
     "image": "/images/categories/corporate.svg",
     "count": 28
   },
   {
     "slug": "personalized-gifts",
-    "name": "Personalized Gifts",
+    "name": "Fashion & Accessories",
     "image": "/images/categories/personalized.svg",
     "count": 51
   },
   {
     "slug": "wedding-gifts",
-    "name": "Wedding Gifts",
+    "name": "Kitchen & Dining",
     "image": "/images/categories/wedding.svg",
     "count": 31
   },
   {
     "slug": "festival-gifts",
-    "name": "Festival Gifts",
+    "name": "Beauty & Personal Care",
     "image": "/images/categories/festival.svg",
     "count": 46
   }

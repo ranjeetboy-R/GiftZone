@@ -1,14 +1,7 @@
 import { Router } from 'express';
-import {
-    listProducts,
-    getProduct,
-    getRelatedProducts,
-    createProduct,
-    updateProduct,
-    deleteProduct
-} from '../controllers/products.js';
-import { requireAdmin } from '../middleware/admin.js';
 
+import { listProducts, getProduct, getRelatedProducts, createProduct, updateProduct, deleteProduct } from '../controllers/products.js';
+import { requireAdmin } from '../middleware/admin.js';
 const router = Router();
 
 router.get('/', listProducts);
