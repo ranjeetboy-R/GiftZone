@@ -261,7 +261,7 @@ export async function updateOrder(req, res) {
       }
     }
     const order = await Order.findByIdAndUpdate(req.params.id, updates, {
-      new: true,
+      returnDocument: 'after',
       runValidators: true
     });
     if (!order) {

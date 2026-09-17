@@ -1,16 +1,36 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
-import { Loader2, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import {
+    Eye,
+    EyeOff,
+    Loader2,
+    LockKeyhole,
+    Mail,
+    ShieldCheck
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+
+const SAVED_EMAIL_KEY = "gift-zone-admin-email";
 
 const page = () => {
     const [loginLoading, setLoginLoading] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState("");
     const router = useRouter();
+
+    useEffect(() => {
+        const savedEmail = localStorage.getItem(SAVED_EMAIL_KEY);
+
+        if (savedEmail) {
+            setEmail(savedEmail);
+            setRememberMe(true);
+        }
+    }, []);
 
     useEffect(() => {
         const checkAdminSession = async () => {
@@ -21,6 +41,7 @@ const page = () => {
                 // Not logged in, stay on login page
             }
         };
+
         checkAdminSession();
     }, [router]);
 
@@ -30,6 +51,15 @@ const page = () => {
         try {
             setLoginLoading(true);
             setError("");
+
+            if (rememberMe) {
+                localStorage.setItem(
+                    SAVED_EMAIL_KEY,
+                    email.trim()
+                );
+            } else {
+                localStorage.removeItem(SAVED_EMAIL_KEY);
+            }
 
             const data = await apiFetch("/api/admin/login", {
                 method: "POST",
@@ -108,7 +138,7 @@ const page = () => {
                                 className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#c92532] focus:bg-white focus:ring-4 focus:ring-red-50"
                                 placeholder="Enter admin email"
                                 type="email"
-                                autoComplete="email"
+                                autoComplete="username"
                                 required
                             />
                         </div>
@@ -134,12 +164,51 @@ const page = () => {
                                 onChange={(event) =>
                                     setPassword(event.target.value)
                                 }
-                                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#c92532] focus:bg-white focus:ring-4 focus:ring-red-50"
+                                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-12 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#c92532] focus:bg-white focus:ring-4 focus:ring-red-50"
                                 placeholder="Enter your password"
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 autoComplete="current-password"
                                 required
                             />
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setShowPassword((value) => !value)
+                                }
+                                aria-label={
+                                    showPassword
+                                        ? "Hide password"
+                                        : "Show password"
+                                }
+                                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                            >
+                                {showPassword ? (
+                                    <EyeOff size={18} />
+                                ) : (
+                                    <Eye size={18} />
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-600">
+                            <input
+                                type="checkbox"
+                                checked={rememberMe}
+                                onChange={(event) =>
+                                    setRememberMe(event.target.checked)
+                                }
+                                className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-[#c92532]"
+                            />
+
+                            <span>Remember me</span>
+                        </label>
+
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                            <ShieldCheck size={14} />
+                            Secure login
                         </div>
                     </div>
 

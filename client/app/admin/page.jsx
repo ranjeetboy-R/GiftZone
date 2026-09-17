@@ -78,7 +78,7 @@ export default function AdminPage() {
     if (loading) {
         return (
             <main className="min-h-[calc(100vh-40px)]">
-                <div className="flex min-h-[500px] items-center justify-center">
+                <div className="flex min-h-125 items-center justify-center">
                     <div className="text-center">
                         <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-slate-200 border-t-[#c92532]" />
                         <p className="mt-4 text-sm font-semibold text-slate-500">Loading dashboard...</p>

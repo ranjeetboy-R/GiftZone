@@ -4,9 +4,8 @@ import { useEffect, useState } from 'react';
 import ProductCard from './ProductCard';
 import SectionHeading from './SectionHeading';
 import { apiFetch } from '@/lib/api';
-import { demoProducts as fallbackProducts } from '@/data/site';
 export default function BestSellers() {
-  const [products, setProducts] = useState(fallbackProducts);
+  const [products, setProducts] = useState();
   useEffect(() => {
     apiFetch('/api/products?featured=true').then(data => {
       if (data.products?.length) setProducts(data.products.slice(0, 8));

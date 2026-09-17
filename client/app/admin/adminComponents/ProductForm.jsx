@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { X, Upload, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import toast from "react-hot-toast";
+import { categories as categoriesData } from "@/public/data/site.json";
 
 const emptyProduct = {
     name: "",
@@ -39,24 +40,9 @@ const ProductForm = ({
     const { getToken } = useAuth();
 
     useEffect(() => {
-        const loadCategories = async () => {
-            try {
-                const response = await fetch("/data/categories.json");
-
-                if (!response.ok) {
-                    throw new Error("Failed to load categories");
-                }
-
-                const data = await response.json();
-
-                setCategories(Array.isArray(data) ? data : []);
-            } catch (error) {
-                console.error("Failed to load categories:", error);
-                setCategories([]);
-            }
-        };
-
-        loadCategories();
+        if (Array.isArray(categoriesData)) {
+            setCategories(categoriesData);
+        }
     }, []);
 
     const showError = (message) => {
@@ -316,10 +302,10 @@ const ProductForm = ({
     };
 
     return (
-        <div className="fixed inset-0 z-50 h-screen overflow-y-auto scrollbar-none bg-black/50 p-5">
+        <div className="fixed inset-0 z-50 h-screen overflow-y-auto scrollbar-none bg-black/50 md:p-5">
             <form
                 onSubmit={saveProduct}
-                className="mx-auto min-h-full w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl md:p-7"
+                className="mx-auto min-h-full w-full max-w-3xl md:rounded-2xl bg-white p-5 shadow-2xl md:p-7"
             >
                 <div className="flex items-center justify-between gap-4">
                     <div>
@@ -406,10 +392,10 @@ const ProductForm = ({
                                 Select category
                             </option>
 
-                            {categories.map((category) => (
+                            {categories?.map((category) => (
                                 <option
                                     key={category.slug || category.name}
-                                    value={category.name}
+                                    value={category.slug}
                                 >
                                     {category.name}
                                 </option>

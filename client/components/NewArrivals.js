@@ -4,9 +4,8 @@ import { useEffect, useState } from 'react';
 import ProductCard from './ProductCard';
 import SectionHeading from './SectionHeading';
 import { apiFetch } from '@/lib/api';
-import { demoProducts as fallbackProducts } from '@/data/site';
 export default function NewArrivals() {
-  const [products, setProducts] = useState(fallbackProducts.slice(0, 4));
+  const [products, setProducts] = useState();
   useEffect(() => {
     apiFetch('/api/products?new=true&limit=8').then(data => {
       if (data.products?.length) {

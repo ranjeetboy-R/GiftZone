@@ -92,7 +92,7 @@ const OrdersTable = ({ orders, loading, onView }) => {
 
     return (
         <div className="mt-6 overflow-hidden rounded-2xl border border-slate-100 bg-white">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto md:scrollbar-auto scrollbar-none">
                 <table className="w-full min-w-262.5 text-left">
                     <thead>
                         <tr className="border-b bg-slate-600 text-xs uppercase tracking-wide text-white">

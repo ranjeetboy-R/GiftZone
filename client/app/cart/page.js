@@ -151,7 +151,7 @@ export default function CartPage() {
               <section className="grid gap-4">
                 {items.map(item => {
                   const itemId = item.id || item._id || item.slug;
-                  const image = item.images?.[0] || item.image || '/images/products/gift-hamper.svg';
+                  const image = item.images?.[0] || item.image;
                   const price = Number(item.price) || 0;
                   const quantity = Math.max(Number(item.quantity) || 1, 1);
                   const stock = Number(item.stock);
@@ -168,9 +168,6 @@ export default function CartPage() {
                         src={image}
                         alt={item.name || 'Product'}
                         className="h-28 w-28 rounded-lg bg-[#fff7f3] object-cover"
-                        onError={event => {
-                          event.currentTarget.src = '/images/products/gift-hamper.svg';
-                        }}
                       />
 
                       <div className="min-w-0 flex-1">
