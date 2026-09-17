@@ -1,11 +1,9 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
-import { useAuth } from "@clerk/nextjs";
 import { Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import ProductForm from "../adminComponents/ProductForm";
 import toast from "react-hot-toast";
@@ -35,23 +33,10 @@ const page = () => {
     const [editingProduct, setEditingProduct] = useState(null);
     const [productForm, setProductForm] = useState(emptyProduct);
 
-    const { getToken } = useAuth();
-    const router = useRouter();
-
     const loadProducts = async () => {
         try {
             setLoading(true);
-            const token = await getToken();
-
-            if (!token) {
-                router.replace("/admin/login");
-                return;
-            }
-
-            const data = await apiFetch("/api/products?all=true&limit=100", {
-                token
-            });
-
+            const data = await apiFetch("/api/products?all=true&limit=100");
             setProducts(data.products || []);
         } catch (error) {
             console.error("Failed to load products:", error);
@@ -181,7 +166,7 @@ const page = () => {
             )}
 
             {!loading && (
-                <div className="mt-3 overflow-x-auto">
+                <div className="mt-3 overflow-x-auto md:scrollbar-auto scrollbar-none">
                     <table className="w-full min-w-225 text-left text-sm">
                         <thead>
                             <tr className="border-b border-slate-200 text-xs uppercase text-slate-400">
@@ -206,11 +191,9 @@ const page = () => {
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                     >
-                                                        <Image
+                                                        <img
                                                             src={product.images[0]}
                                                             alt={product.name || "Product"}
-                                                            fill
-                                                            sizes="64px"
                                                             className="h-full w-full object-cover"
                                                         />
                                                     </Link>

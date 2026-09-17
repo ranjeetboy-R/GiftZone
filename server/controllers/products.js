@@ -248,7 +248,7 @@ export async function updateProduct(req, res) {
       req.params.id,
       payload,
       {
-        new: true,
+        returnDocument: 'after',
         runValidators: true
       }
     );
@@ -296,5 +296,74 @@ export async function deleteProduct(req, res) {
   }
   catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+function formatCategoryName(slug) {
+  const names = {
+    'electronics-gadgets': 'Electronics & Gadgets',
+    'mobile-accessories': 'Mobile Accessories',
+    'home-living': 'Home & Living',
+    'fashion-accessories': 'Fashion & Accessories',
+    'beauty-personal-care': 'Beauty & Personal Care',
+    'kitchen-dining': 'Kitchen & Dining',
+    'personalized-gifts': 'Personalized Gifts',
+    'birthday-gifts': 'Birthday Gifts',
+    'anniversary-gifts': 'Anniversary Gifts',
+    'wedding-gifts': 'Wedding Gifts',
+    'corporate-gifts': 'Corporate Gifts',
+    'festival-gifts': 'Festival Gifts'
+  };
+
+  return (
+    names[slug] ||
+    slug
+      .split('-')
+      .map(
+        word =>
+          word.charAt(0).toUpperCase() + word.slice(1)
+      )
+      .join(' ')
+  );
+}
+
+export async function getCategories(req, res) {
+  try {
+    const categories = await Product.aggregate([
+      {
+        $match: {
+          active: true,
+          category: {
+            $exists: true,
+            $nin: ['', null]
+          }
+        }
+      },
+      {
+        $group: {
+          _id: '$category',
+          count: {
+            $sum: 1
+          }
+        }
+      },
+      {
+        $sort: {
+          _id: 1
+        }
+      }
+    ]);
+
+    res.json({
+      categories: categories?.map(item => ({
+        slug: item._id,
+        name: formatCategoryName(item._id),
+        count: item.count
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
   }
 }

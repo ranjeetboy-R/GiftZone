@@ -52,7 +52,7 @@ const RecentOrders = ({ orders }) => {
 
             {orders.length ? (
                 <div className="overflow-x-auto">
-                    <table className="w-full min-w-[720px] text-left">
+                    <table className="w-full min-w-180 text-left">
                         <thead>
                             <tr className="border-b border-slate-100 bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-slate-400">
                                 <th className="px-5 py-3">Order</th>
@@ -69,12 +69,12 @@ const RecentOrders = ({ orders }) => {
                             {orders.map((order) => (
                                 <tr key={order._id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
                                     <td className="px-5 py-4">
-                                        <p className="max-w-[130px] truncate text-xs font-extrabold text-slate-800">#{order._id}</p>
+                                        <p className="max-w-32 truncate text-xs font-extrabold text-slate-800">#{order._id}</p>
                                     </td>
 
                                     <td className="px-5 py-4">
-                                        <p className="max-w-[150px] truncate text-sm font-bold text-slate-800 capitalize">{order.customer?.name || '-'}</p>
-                                        <p className="mt-1 max-w-[150px] truncate text-[11px] text-slate-400">{order.customer?.email || '-'}</p>
+                                        <p className="max-w-36 truncate text-sm font-bold text-slate-800 capitalize">{order.customer?.name || '-'}</p>
+                                        <p className="mt-1 max-w-36 truncate text-xs text-slate-400">{order.customer?.email || '-'}</p>
                                     </td>
 
                                     <td className="whitespace-nowrap px-5 py-4 text-sm font-extrabold text-slate-800">{formatCurrency(order.total)}</td>
@@ -100,7 +100,7 @@ const RecentOrders = ({ orders }) => {
                     </table>
                 </div>
             ) : (
-                <div className="flex min-h-[280px] flex-col items-center justify-center px-5 text-center">
+                <div className="flex min-h-70 flex-col items-center justify-center px-5 text-center">
                     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
                         <ShoppingBag size={25} />
                     </div>

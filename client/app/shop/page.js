@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -10,6 +10,65 @@ import EmptyState from '@/components/EmptyState';
 import ErrorState from '@/components/ErrorState';
 import { useCart } from '@/context/CartContext';
 import { apiFetch } from '@/lib/api';
+import { Search, X } from 'lucide-react';
+
+const PAGE_SIZE = 8;
+
+const SORT_OPTIONS = [
+  {
+    value: 'newest',
+    label: 'Newest'
+  },
+  {
+    value: 'price-low',
+    label: 'Price: Low to High'
+  },
+  {
+    value: 'price-high',
+    label: 'Price: High to Low'
+  },
+  {
+    value: 'rating',
+    label: 'Top Rated'
+  },
+  {
+    value: 'name',
+    label: 'Name: A to Z'
+  }
+];
+
+const getProductId = product => {
+  return (
+    product?.id ||
+    product?._id ||
+    product?.slug ||
+    ''
+  );
+};
+
+const getWishlistIdsFromStorage = () => {
+  if (typeof window === 'undefined') {
+    return new Set();
+  }
+
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem('gift-zone-wishlist') || '[]'
+    );
+
+    if (!Array.isArray(saved)) {
+      return new Set();
+    }
+
+    return new Set(
+      saved
+        .map(item => getProductId(item))
+        .filter(Boolean)
+    );
+  } catch {
+    return new Set();
+  }
+};
 
 export default function ShopPage() {
   const { items } = useCart();
@@ -19,24 +78,41 @@ export default function ShopPage() {
 
   const [catalog, setCatalog] = useState([]);
   const [categories, setCategories] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const [sort, setSort] = useState('newest');
+
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
+
   const [wishlistOnly, setWishlistOnly] = useState(false);
+  const [wishlistIds, setWishlistIds] = useState(
+    () => new Set()
+  );
 
-  const pageSize = 8;
-
+  /*
+   * Keep URL filters and local state synchronized.
+   */
   useEffect(() => {
-    const currentSearch = searchParams.get('search') || '';
-    const currentCategory = searchParams.get('category') || '';
+    const currentSearch =
+      searchParams.get('search') || '';
+
+    const currentCategory =
+      searchParams.get('category') || '';
+
     const currentSort =
       searchParams.get('sort') ||
-      (searchParams.get('best') === 'true' ? 'rating' : 'newest');
+      (
+        searchParams.get('best') === 'true'
+          ? 'rating'
+          : 'newest'
+      );
+
     const currentPage = Math.max(
       Number(searchParams.get('page')) || 1,
       1
@@ -48,132 +124,482 @@ export default function ShopPage() {
     setPage(currentPage);
   }, [searchParams]);
 
+  /*
+   * Load categories once.
+   */
   useEffect(() => {
-    fetch('/data/categories.json')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to load categories');
-        }
+    let cancelled = false;
 
-        return response.json();
-      })
-      .then(data => {
-        setCategories(data || []);
-      })
-      .catch(() => {
-        setCategories([]);
-      });
+    const loadCategories = async () => {
+      try {
+        const data = await apiFetch(
+          '/api/products/categories'
+        );
+
+        if (!cancelled) {
+          setCategories(
+            Array.isArray(data?.categories)
+              ? data.categories
+              : []
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setCategories([]);
+        }
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  /*
+   * Load wishlist from localStorage.
+   *
+   * This runs only on the client.
+   * It does NOT access localStorage during render.
+   */
   useEffect(() => {
-    const params = new URLSearchParams();
+    const syncWishlist = () => {
+      setWishlistIds(
+        getWishlistIdsFromStorage()
+      );
+    };
 
-    params.set('page', String(page));
-    params.set('limit', String(pageSize));
+    syncWishlist();
 
-    if (search.trim()) {
-      params.set('search', search.trim());
-    }
+    window.addEventListener(
+      'storage',
+      syncWishlist
+    );
 
-    if (category) {
-      params.set('category', category);
-    }
+    window.addEventListener(
+      'wishlist-updated',
+      syncWishlist
+    );
 
-    if (searchParams.get('new') === 'true') {
-      params.set('new', 'true');
-    }
+    return () => {
+      window.removeEventListener(
+        'storage',
+        syncWishlist
+      );
 
-    if (searchParams.get('best') === 'true') {
-      params.set('best', 'true');
-    }
+      window.removeEventListener(
+        'wishlist-updated',
+        syncWishlist
+      );
+    };
+  }, []);
 
-    if (sort && sort !== 'newest') {
-      params.set('sort', sort);
-    }
+  /*
+   * Fetch products.
+   *
+   * Search comes from the URL.
+   * Therefore typing in the search box does NOT
+   * trigger an API request.
+   *
+   * API request happens after:
+   * - Search button
+   * - Enter key
+   * - Category change
+   * - Sort change
+   * - Pagination
+   */
+  useEffect(() => {
+    let cancelled = false;
 
-    setLoading(true);
-    setError('');
+    const controller = new AbortController();
 
-    apiFetch(`/api/products?${params.toString()}`)
-      .then(data => {
-        const products = data.products || [];
-        const pagination = data.pagination || {};
+    const loadProducts = async () => {
+      const params = new URLSearchParams();
+
+      params.set('page', String(page));
+      params.set('limit', String(PAGE_SIZE));
+
+      const currentSearch =
+        searchParams.get('search') || '';
+
+      const currentCategory =
+        searchParams.get('category') || '';
+
+      const currentSort =
+        searchParams.get('sort') ||
+        (
+          searchParams.get('best') === 'true'
+            ? 'rating'
+            : 'newest'
+        );
+
+      const isNew =
+        searchParams.get('new') === 'true';
+
+      const isBest =
+        searchParams.get('best') === 'true';
+
+      if (currentSearch.trim()) {
+        params.set(
+          'search',
+          currentSearch.trim()
+        );
+      }
+
+      if (currentCategory) {
+        params.set(
+          'category',
+          currentCategory
+        );
+      }
+
+      if (isNew) {
+        params.set('new', 'true');
+      }
+
+      if (isBest) {
+        params.set('best', 'true');
+      }
+
+      if (
+        currentSort &&
+        currentSort !== 'newest'
+      ) {
+        params.set(
+          'sort',
+          currentSort
+        );
+      }
+
+      setLoading(true);
+      setError('');
+
+      try {
+        const data = await apiFetch(
+          `/api/products?${params.toString()}`,
+          {
+            signal: controller.signal
+          }
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        const products = Array.isArray(
+          data?.products
+        )
+          ? data.products
+          : [];
+
+        const pagination =
+          data?.pagination || {};
 
         setCatalog(products);
-        setTotalProducts(pagination.total || 0);
-        setPages(Math.max(pagination.pages || 1, 1));
-      })
-      .catch(() => {
-        setCatalog([]);
-        setTotalProducts(0);
-        setPages(1);
-        setError('Unable to load catalog.');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [page, search, category, sort, searchParams]);
 
-  const updateUrl = (changes) => {
-    const params = new URLSearchParams(searchParams.toString());
+        setTotalProducts(
+          Number(pagination.total) || 0
+        );
 
-    Object.entries(changes).forEach(([key, value]) => {
-      if (value) {
-        params.set(key, value);
-      } else {
-        params.delete(key);
+        setPages(
+          Math.max(
+            Number(pagination.pages) || 1,
+            1
+          )
+        );
+      } catch (requestError) {
+        if (
+          requestError?.name ===
+          'AbortError'
+        ) {
+          return;
+        }
+
+        if (!cancelled) {
+          setCatalog([]);
+          setTotalProducts(0);
+          setPages(1);
+          setError(
+            'Unable to load catalog.'
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-    });
+    };
 
+    loadProducts();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [page, searchParams]);
+
+  /*
+   * Update URL without losing existing filters.
+   */
+  const updateUrl = changes => {
+    const params = new URLSearchParams(
+      searchParams.toString()
+    );
+
+    Object.entries(changes).forEach(
+      ([key, value]) => {
+        const normalizedValue =
+          typeof value === 'string'
+            ? value.trim()
+            : value;
+
+        if (
+          normalizedValue !== undefined &&
+          normalizedValue !== null &&
+          normalizedValue !== ''
+        ) {
+          params.set(
+            key,
+            String(normalizedValue)
+          );
+        } else {
+          params.delete(key);
+        }
+      }
+    );
+
+    /*
+     * Every filter change starts from page 1.
+     */
     params.delete('page');
 
+    const query = params.toString();
+
     router.push(
-      `/shop${params.toString() ? `?${params.toString()}` : ''}`
+      query
+        ? `/shop?${query}`
+        : '/shop'
     );
+
   };
 
-  const changePage = nextPage => {
-    if (nextPage < 1 || nextPage > pages || nextPage === page) {
+  /*
+   * Search button.
+   */
+  const handleSearch = () => {
+    updateUrl({
+      search: search.trim()
+    });
+  };
+
+  /*
+   * Search using Enter.
+   */
+  const handleSearchKeyDown = event => {
+    if (event.key !== 'Enter') {
       return;
     }
 
-    const params = new URLSearchParams(searchParams.toString());
+    event.preventDefault();
+    handleSearch();
+  };
+
+  /*
+   * Clear search.
+   */
+  const clearSearch = () => {
+    setSearch('');
+
+    updateUrl({
+      search: ''
+    });
+  };
+
+  /*
+   * Change category.
+   */
+  const handleCategoryChange = value => {
+    updateUrl({
+      category: value
+    });
+  };
+
+  /*
+   * Change sort.
+   */
+  const handleSortChange = value => {
+    updateUrl({
+      sort:
+        value === 'newest'
+          ? ''
+          : value
+    });
+  };
+
+  /*
+   * Change pagination.
+   */
+  const changePage = nextPage => {
+    if (
+      nextPage < 1 ||
+      nextPage > pages ||
+      nextPage === page
+    ) {
+      return;
+    }
+
+    const params = new URLSearchParams(
+      searchParams.toString()
+    );
 
     if (nextPage === 1) {
       params.delete('page');
     } else {
-      params.set('page', String(nextPage));
+      params.set(
+        'page',
+        String(nextPage)
+      );
     }
+
+    const query = params.toString();
 
     router.push(
-      `/shop${params.toString() ? `?${params.toString()}` : ''}`
+      query
+        ? `/shop?${query}`
+        : '/shop'
     );
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
 
-  const getWishlistIds = () => {
-    try {
-      const saved = JSON.parse(
-        localStorage.getItem('gift-zone-wishlist') || '[]'
+  /*
+   * Generate a compact pagination list.
+   *
+   * Instead of rendering 100 buttons when there
+   * are many pages, this keeps the UI clean.
+   */
+  const paginationItems = useMemo(() => {
+    if (pages <= 7) {
+      return Array.from(
+        { length: pages },
+        (_, index) => index + 1
       );
-
-      return new Set(
-        saved.map(item => item.id || item._id || item.slug)
-      );
-    } catch {
-      return new Set();
     }
-  };
 
-  const visibleProducts = wishlistOnly
-    ? catalog.filter(product =>
-      getWishlistIds().has(
-        product.id || product._id || product.slug
-      )
-    )
-    : catalog;
+    const result = [];
+
+    result.push(1);
+
+    if (page > 3) {
+      result.push('left-ellipsis');
+    }
+
+    const start = Math.max(
+      2,
+      page - 1
+    );
+
+    const end = Math.min(
+      pages - 1,
+      page + 1
+    );
+
+    for (
+      let number = start;
+      number <= end;
+      number += 1
+    ) {
+      result.push(number);
+    }
+
+    if (page < pages - 2) {
+      result.push('right-ellipsis');
+    }
+
+    result.push(pages);
+
+    return result;
+  }, [page, pages]);
+
+  /*
+   * Wishlist filtering.
+   *
+   * This uses the already synchronized Set.
+   * localStorage is NOT read here.
+   */
+  const visibleProducts = useMemo(() => {
+    if (!wishlistOnly) {
+      return catalog;
+    }
+
+    return catalog.filter(product => {
+      const productId =
+        getProductId(product);
+
+      return (
+        productId &&
+        wishlistIds.has(productId)
+      );
+    });
+  }, [
+    catalog,
+    wishlistOnly,
+    wishlistIds
+  ]);
+
+  /*
+   * Active filter count.
+   */
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+
+    if (category) {
+      count += 1;
+    }
+
+    if (searchParams.get('new') === 'true') {
+      count += 1;
+    }
+
+    if (searchParams.get('best') === 'true') {
+      count += 1;
+    }
+
+    if (sort && sort !== 'newest') {
+      count += 1;
+    }
+
+    if (wishlistOnly) {
+      count += 1;
+    }
+
+    return count;
+  }, [
+    category,
+    sort,
+    wishlistOnly,
+    searchParams
+  ]);
+
+  /*
+   * Clear all filters.
+   */
+  const clearAllFilters = () => {
+    setWishlistOnly(false);
+    setSearch('');
+
+    router.push('/shop');
+
+  };
 
   const cartCount = items.reduce(
-    (sum, item) => sum + item.quantity,
+    (sum, item) =>
+      sum +
+      (Number(item.quantity) || 0),
     0
   );
 
@@ -183,193 +609,405 @@ export default function ShopPage() {
 
       <main className="section-pad">
         <div className="container-width">
-          <div className="grid gap-5 lg:grid-cols-[240px_1fr]">
-            <aside className="h-fit rounded-xl border border-slate-200 bg-white p-5 lg:sticky lg:top-28">
-              <h2 className="font-bold">
-                Filters
-              </h2>
 
-              <label className="mt-5 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                Search
-              </label>
+          {/* Page Heading */}
+          <div className="mb-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#c92532]">
+                  Shop
+                </p>
 
+                <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">
+                  Explore Our Products
+                </h1>
+
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                  Discover products across
+                  multiple categories,
+                  carefully organized for
+                  an easier shopping
+                  experience.
+                </p>
+              </div>
+
+              <div className="text-sm text-slate-500">
+                <strong className="font-extrabold text-slate-900">
+                  {totalProducts}
+                </strong>{' '}
+                products found
+              </div>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="mb-5">
+            <div className="relative">
               <input
+                type="text"
                 value={search}
                 onChange={event =>
-                  updateUrl({
-                    search: event.target.value
-                  })
+                  setSearch(
+                    event.target.value
+                  )
                 }
-                placeholder="Search products"
-                className="mt-2 w-full rounded-md border px-3 py-2.5 text-sm outline-none focus:border-[#c92532]"
+                onKeyDown={
+                  handleSearchKeyDown
+                }
+                placeholder={`Search in ${totalProducts} products...`}
+                aria-label="Search products"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 pr-24 text-sm text-slate-800 shadow-sm outline-none transition focus:border-[#c92532] focus:ring-4 focus:ring-[#c92532]/10"
               />
+
+              {search && (
+                <button
+                  type="button"
+                  onClick={
+                    clearSearch
+                  }
+                  aria-label="Clear search"
+                  className="absolute right-12 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                >
+                  <X size={16} />
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={
+                  handleSearch
+                }
+                aria-label="Search"
+                className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg bg-[#c92532] text-white transition hover:bg-[#a91d29] active:scale-95"
+              >
+                <Search size={17} />
+              </button>
+            </div>
+          </div>
+
+          <div className="gap-6 flex flex-col">
+
+            {/* Filters */}
+            <aside className="h-fit rounded-xl border border-slate-200 bg-white p-4 sm:p-5 lg:sticky lg:top-28">
+              <div className="flex items-center justify-between">
+                <h2 className="font-bold text-slate-900">
+                  Filters
+                </h2>
+
+                {activeFilterCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="text-xs font-bold text-[#c92532] hover:underline"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
 
               <label className="mt-5 block text-xs font-bold uppercase tracking-wide text-slate-500">
                 Category
               </label>
 
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => updateUrl({
-                    category: ""
-                  })}
-                  className={`text-left border border-slate-200 hover:border-slate-300 transition-all hover:bg-slate-50 w-fit px-3 py-1 rounded-lg text-sm ${!category
-                    ? 'font-bold text-[#c92532]'
-                    : ''
-                    }`}
-                >
-                  All Categories
-                </button>
-
-                {categories.map(item => (
+              <div className="mt-2 overflow-x-auto md:scrollbar-thin scrollbar-none pb-2">
+                <div className="flex w-max min-w-full gap-2">
                   <button
-                    key={item.slug}
                     type="button"
-                    onClick={() => updateUrl({
-                      category: item.slug
-                    })
+                    onClick={() =>
+                      handleCategoryChange('')
                     }
-                    className={`text-left border border-slate-200 hover:border-slate-300 transition-all hover:bg-slate-50 w-fit px-3 py-1 rounded-lg text-sm ${category === item.slug
-                      ? 'font-bold bg-slate-50 text-rose-600 border-slate-300'
-                      : ''
+                    className={`shrink-0 whitespace-nowrap rounded-lg border px-3 py-2 text-sm transition-all duration-200 ${!category
+                      ? 'border-[#c92532] bg-[#fff5f5] font-bold text-[#c92532]'
+                      : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                   >
-                    {item.name}{' '}
-                    <span className="text-slate-400">
-                      ({item.count})
-                    </span>
+                    All Categories
                   </button>
-                ))}
+
+                  {categories.map(item => (
+                    <button
+                      key={item.slug}
+                      type="button"
+                      onClick={() =>
+                        handleCategoryChange(item.slug)
+                      }
+                      className={`shrink-0 whitespace-nowrap rounded-lg border px-3 py-2 text-sm transition-all duration-200 ${category === item.slug
+                        ? 'border-[#c92532] bg-[#fff5f5] font-bold text-[#c92532]'
+                        : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                        }`}
+                    >
+                      {item.name}
+
+                      <span
+                        className={`ml-1 ${category === item.slug
+                          ? 'text-[#c92532]/70'
+                          : 'text-slate-400'
+                          }`}
+                      >
+                        ({item.count})
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <label className="mt-5 flex items-center gap-2 text-sm font-semibold">
-                <input
-                  type="checkbox"
-                  checked={wishlistOnly}
-                  onChange={event =>
-                    setWishlistOnly(
-                      event.target.checked
-                    )
-                  }
-                />
+              <div className="mt-4 flex items-center justify-between gap-4">
+                <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={wishlistOnly}
+                    onChange={event =>
+                      setWishlistOnly(
+                        event.target.checked
+                      )
+                    }
+                    className="h-4 w-4 cursor-pointer accent-[#c92532]"
+                  />
 
-                Wishlist only
-              </label>
-            </aside>
+                  Wishlist only
 
-            <section>
-              <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
-                <p className="text-sm text-slate-500">
-                  <strong className="text-slate-800">
-                    {totalProducts}
-                  </strong>{' '}
-                  products found
-                </p>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                    {wishlistIds.size}
+                  </span>
+                </label>
 
                 <select
                   value={sort}
                   onChange={event =>
-                    updateUrl({
-                      sort:
-                        event.target.value ===
-                          'newest'
-                          ? ''
-                          : event.target.value
-                    })
+                    handleSortChange(
+                      event.target.value
+                    )
                   }
-                  className="rounded-md border border-slate-300 px-4 py-2.5 text-sm font-semibold outline-none"
+                  className="shrink-0 cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 outline-none transition focus:border-[#c92532]"
                 >
-                  <option value="newest">
-                    Newest
-                  </option>
-
-                  <option value="price-low">
-                    Price: Low to High
-                  </option>
-
-                  <option value="price-high">
-                    Price: High to Low
-                  </option>
-
-                  <option value="rating">
-                    Top Rated
-                  </option>
-
-                  <option value="name">
-                    Name: A to Z
-                  </option>
+                  {SORT_OPTIONS.map(option => (
+                    <option
+                      key={option.value}
+                      value={option.value}
+                    >
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </div>
+            </aside>
+
+            {/* Product Area */}
+            <section className="relative min-w-0 bg-white">
+
+              {/* Active Search/Filter Info */}
+              {(search ||
+                category ||
+                wishlistOnly) && (
+                  <div className="mb-4 flex flex-wrap items-center gap-2">
+                    {search && (
+                      <button
+                        type="button"
+                        onClick={
+                          clearSearch
+                        }
+                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600"
+                      >
+                        Search:
+                        <span className="max-w-45 truncate text-slate-900">
+                          {search}
+                        </span>
+
+                        <X
+                          size={13}
+                        />
+                      </button>
+                    )}
+
+                    {category && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleCategoryChange(
+                            ''
+                          )
+                        }
+                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600"
+                      >
+                        Category:
+                        <span className="text-slate-900">
+                          {categories.find(
+                            item =>
+                              item.slug ===
+                              category
+                          )
+                            ?.name ||
+                            category}
+                        </span>
+
+                        <X
+                          size={13}
+                        />
+                      </button>
+                    )}
+
+                    {wishlistOnly && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setWishlistOnly(
+                            false
+                          )
+                        }
+                        className="inline-flex items-center gap-1.5 rounded-full border border-red-100 bg-[#fff5f5] px-3 py-1.5 text-xs font-semibold text-[#c92532]"
+                      >
+                        Wishlist only
+
+                        <X
+                          size={13}
+                        />
+                      </button>
+                    )}
+                  </div>
+                )}
 
               {error ? (
                 <div className="mt-6">
-                  <ErrorState message={error} />
+                  <ErrorState
+                    message={error}
+                  />
                 </div>
               ) : loading ? (
                 <div className="mt-6">
-                  <LoadingGrid count={pageSize} />
+                  <LoadingGrid
+                    count={
+                      PAGE_SIZE
+                    }
+                  />
                 </div>
               ) : visibleProducts.length ? (
                 <>
-                  <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                    {visibleProducts.map(product => (
-                      <ProductCard
-                        key={
-                          product.id ||
-                          product._id ||
-                          product.slug
-                        }
-                        product={product}
-                      />
-                    ))}
+                  {/* Products */}
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+                    {visibleProducts.map(
+                      product => (
+                        <ProductCard
+                          key={getProductId(
+                            product
+                          )}
+                          product={
+                            product
+                          }
+                        />
+                      )
+                    )}
                   </div>
 
-                  {pages > 1 && (
-                    <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
-                      <button
-                        type="button"
-                        disabled={page === 1}
-                        onClick={() =>
-                          changePage(page - 1)
-                        }
-                        className="rounded-md border px-4 py-2 text-sm disabled:opacity-40"
-                      >
-                        Previous
-                      </button>
-
-                      {Array.from(
-                        { length: pages },
-                        (_, index) => index + 1
-                      ).map(number => (
+                  {/* Pagination */}
+                  {!wishlistOnly &&
+                    pages > 1 && (
+                      <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
                         <button
-                          key={number}
                           type="button"
-                          onClick={() =>
-                            changePage(number)
+                          disabled={
+                            page ===
+                            1
                           }
-                          className={`h-9 w-9 rounded-md text-sm font-bold ${number === page
-                            ? 'bg-[#c92532] text-white'
-                            : 'border'
-                            }`}
+                          onClick={() =>
+                            changePage(
+                              page -
+                              1
+                            )
+                          }
+                          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                          {number}
+                          Previous
                         </button>
-                      ))}
 
-                      <button
-                        type="button"
-                        disabled={page === pages}
-                        onClick={() =>
-                          changePage(page + 1)
-                        }
-                        className="rounded-md border px-4 py-2 text-sm disabled:opacity-40"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  )}
+                        {paginationItems.map(
+                          (
+                            item,
+                            index
+                          ) =>
+                            typeof item ===
+                              'string' ? (
+                              <span
+                                key={
+                                  item
+                                }
+                                className="px-1 text-sm text-slate-400"
+                              >
+                                …
+                              </span>
+                            ) : (
+                              <button
+                                key={
+                                  item
+                                }
+                                type="button"
+                                onClick={() =>
+                                  changePage(
+                                    item
+                                  )
+                                }
+                                aria-current={
+                                  item ===
+                                    page
+                                    ? 'page'
+                                    : undefined
+                                }
+                                className={`h-9 min-w-9 rounded-lg px-2 text-sm font-bold transition ${item ===
+                                  page
+                                  ? 'bg-[#c92532] text-white shadow-sm'
+                                  : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                                  }`}
+                              >
+                                {
+                                  item
+                                }
+                              </button>
+                            )
+                        )}
+
+                        <button
+                          type="button"
+                          disabled={
+                            page ===
+                            pages
+                          }
+                          onClick={() =>
+                            changePage(
+                              page +
+                              1
+                            )
+                          }
+                          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
                 </>
+              ) : wishlistOnly ? (
+                <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center sm:p-12">
+                  <h2 className="text-lg font-extrabold text-slate-900">
+                    Your wishlist is empty
+                  </h2>
+
+                  <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                    Add products to
+                    your wishlist
+                    and they will
+                    appear here.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setWishlistOnly(
+                        false
+                      )
+                    }
+                    className="mt-5 rounded-xl bg-[#c92532] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#a91d29]"
+                  >
+                    Browse Products
+                  </button>
+                </div>
               ) : (
                 <EmptyState
                   title="No products found"

@@ -1,20 +1,22 @@
 import SectionHeading from './SectionHeading';
-import { testimonials } from '@/data/site';
+import { testimonials } from '@/public/data/site.json';
+
 export default function Testimonials() {
+
   return <section className="bg-[#fafafa] py-14">
-  <div className="container-width">
-    <SectionHeading title="What Our Customers Say" subtitle="Real stories. Happy customers." link="View All Reviews →" />
-    <div className="grid gap-5 md:grid-cols-3">{testimonials.map(item =>
-      <article key={item.name} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#fff0ee] text-xl">👤</div>
-          <div>
-            <h3 className="text-sm font-bold">{item.name}</h3>
-            <div className="text-amber-500">★★★★★</div>
+    <div className="container-width">
+      <SectionHeading title="What Our Customers Say" subtitle="Real stories. Happy customers." link="View All Reviews →" />
+      <div className="grid gap-5 md:grid-cols-3">{testimonials.map(item =>
+        <article key={item.name} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#fff0ee] text-xl">👤</div>
+            <div>
+              <h3 className="text-sm font-bold">{item.name}</h3>
+              <div className="text-amber-500">★★★★★</div>
+            </div>
           </div>
-      </div>
-    <p className="mt-4 text-sm leading-6 text-slate-600">“{item.text}”</p>
-  </article>)}</div>
-</div>
-</section>;
+          <p className="mt-4 text-sm leading-6 text-slate-600">“{item.text}”</p>
+        </article>)}</div>
+    </div>
+  </section>;
 }

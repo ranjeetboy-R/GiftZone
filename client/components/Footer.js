@@ -12,8 +12,6 @@ export default function Footer() {
   <div className="mt-4 grid gap-3 text-sm text-slate-300">
     <Link href="/shop">All Products</Link>
     <Link href="/categories">Categories</Link>
-    <Link href="/deals">Special Deals</Link>
-    <Link href="/shop?new=true">New Arrivals</Link>
   </div>
 </div>
 <div>

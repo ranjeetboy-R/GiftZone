@@ -106,7 +106,7 @@ export default function OrderDetailsPage({ params }) {
             <h2 className="text-xl font-bold">Items</h2>
             <div className="mt-5 grid gap-4">{order.items.map(item =>
               <div key={item._id} className="flex gap-4 border-b pb-4">
-                <img src={item.image || '/images/products/gift-hamper.svg'} alt={item.name} className="h-20 w-20 rounded-lg object-cover" />
+                <img src={item.image} alt={item.name} className="h-20 w-20 rounded-lg object-cover" />
                 <div className="flex-1">
                   <p className="font-bold">{item.name}</p>
                   <p className="mt-1 text-sm text-slate-500">₹{item.price.toLocaleString('en-IN')} × {item.quantity}</p>
