@@ -262,6 +262,28 @@ CLIENT_URL=https://your-frontend.vercel.app
 
 Never commit `.env` or `.env.local` files to Git.
 
+### Clerk Production Setup
+
+Create one Clerk application for Gift Zone and use its **Production** instance
+for the deployed app. Add these values to the deployed services:
+
+* Vercel client: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+* Render server: `CLERK_SECRET_KEY`
+
+In the Clerk Dashboard, configure the production instance with:
+
+* The Vercel URL as an allowed origin and redirect URL.
+* The deployed frontend URL as the sign-in and sign-up redirect URL.
+* The deployed API URL as an allowed origin when Clerk requests are made across
+  the frontend and API domains.
+
+Keep `CLERK_SECRET_KEY` only on the server. Never add it to the client
+`.env.local`, Vercel environment variables, browser code, or Git.
+
+The client sends Clerk session tokens as `Authorization: Bearer <token>` for
+protected order and checkout requests. The Express server verifies those
+tokens through `@clerk/express`.
+
 ---
 
 ## Local Development

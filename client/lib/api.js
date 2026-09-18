@@ -9,7 +9,7 @@ function isProductDetailsRequest(path, method) {
 }
 
 export async function apiFetch(path, options = {}) {
-  const { ...rest } = options;
+  const { token, ...rest } = options;
   const method = (rest.method || 'GET').toUpperCase();
   const shouldCache = isProductDetailsRequest(path, method);
   const cacheKey = `${API_URL}${path}`;
@@ -30,7 +30,10 @@ export async function apiFetch(path, options = {}) {
     ...(rest.body instanceof FormData ? {} : {
       'Content-Type': 'application/json'
     }),
-    ...(rest.headers || {})
+    ...(rest.headers || {}),
+    ...(token ? {
+      Authorization: `Bearer ${token}`
+    } : {})
   };
 
   const request = (async () => {
