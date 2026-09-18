@@ -8,10 +8,7 @@ const router = Router();
 router.post('/login', login);
 router.get('/logout', logout);
 router.get('/verify-admin', requireAdmin, (req, res) => {
-    res.json({
-        success: true,
-        message: 'Admin verified'
-    });
+    res.json({ success: true });
 });
 
 export default router;

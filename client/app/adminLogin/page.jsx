@@ -38,7 +38,7 @@ const page = () => {
                 await apiFetch("/api/admin/verify-admin");
                 router.replace("/admin");
             } catch {
-                // Not logged in, stay on login page
+                router.replace("/adminLogin");
             }
         };
 

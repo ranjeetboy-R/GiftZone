@@ -1,10 +1,6 @@
 'use client';
 
-import {
-    usePathname,
-    useRouter
-} from 'next/navigation';
-
+import { usePathname, } from 'next/navigation';
 import Link from 'next/link';
 
 import {
@@ -37,24 +33,9 @@ const navLinks = [
 
 export default function layout({ children }) {
     const pathname = usePathname();
-    const router = useRouter();
 
     const [mobileMenuOpen, setMobileMenuOpen] =
         useState(false);
-
-    useEffect(() => {
-        const checkAdminSession = async () => {
-            try {
-                await apiFetch(
-                    '/api/admin/verify-admin'
-                );
-            } catch {
-                router.replace('/adminLogin');
-            }
-        };
-
-        checkAdminSession();
-    }, [router]);
 
     useEffect(() => {
         setMobileMenuOpen(false);
@@ -109,8 +90,8 @@ export default function layout({ children }) {
                 {/* Mobile Sidebar */}
 
                 <aside className={`fixed bottom-0 left-0 top-0 z-40 w-64 bg-[#0d1a2a] p-5 text-white shadow-2xl transition-transform duration-300 md:hidden ${mobileMenuOpen
-                        ? 'translate-x-0'
-                        : '-translate-x-full'
+                    ? 'translate-x-0'
+                    : '-translate-x-full'
                     }`}
                 >
                     <div className="text-2xl font-extrabold">
@@ -132,9 +113,9 @@ export default function layout({ children }) {
                                     )
                                 }
                                 className={`font-semibold border-l-3 hover:bg-slate-800 px-3 py-2 rounded-r-lg ${pathname ===
-                                        item.href
-                                        ? 'text-white border-amber-500'
-                                        : 'text-slate-300 border-transparent'
+                                    item.href
+                                    ? 'text-white border-amber-500'
+                                    : 'text-slate-300 border-transparent'
                                     }`}
                             >
                                 {item.title}
@@ -171,9 +152,9 @@ export default function layout({ children }) {
                                     key={item.href}
                                     href={item.href}
                                     className={`font-semibold border-l-3 hover:bg-slate-800 px-3 py-2 rounded-r-lg ${pathname ===
-                                            item.href
-                                            ? 'text-white border-amber-500'
-                                            : 'text-slate-300 border-transparent'
+                                        item.href
+                                        ? 'text-white border-amber-500'
+                                        : 'text-slate-300 border-transparent'
                                         }`}
                                 >
                                     {item.title}

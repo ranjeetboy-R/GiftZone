@@ -4,6 +4,7 @@ import Product from '../models/Product.js';
 export async function listProducts(req, res) {
   try {
     const page = Math.max(Number(req.query.page) || 1, 1);
+
     const limit = Math.min(
       Math.max(Number(req.query.limit) || 12, 1),
       100
@@ -25,26 +26,28 @@ export async function listProducts(req, res) {
     if (req.query.search) {
       const search = req.query.search.trim();
 
-      filter.$or = [
-        {
-          name: {
-            $regex: search,
-            $options: 'i'
+      if (search) {
+        filter.$or = [
+          {
+            name: {
+              $regex: search,
+              $options: 'i'
+            }
+          },
+          {
+            description: {
+              $regex: search,
+              $options: 'i'
+            }
+          },
+          {
+            category: {
+              $regex: search,
+              $options: 'i'
+            }
           }
-        },
-        {
-          description: {
-            $regex: search,
-            $options: 'i'
-          }
-        },
-        {
-          category: {
-            $regex: search,
-            $options: 'i'
-          }
-        }
-      ];
+        ];
+      }
     }
 
     if (
@@ -59,26 +62,42 @@ export async function listProducts(req, res) {
     }
 
     const sortMap = {
-      newest: { createdAt: -1 },
-      'price-low': { price: 1 },
-      'price-high': { price: -1 },
-      rating: { rating: -1, reviews: -1 },
-      name: { name: 1 }
+      newest: {
+        createdAt: -1
+      },
+      'price-low': {
+        price: 1
+      },
+      'price-high': {
+        price: -1
+      },
+      rating: {
+        rating: -1,
+        reviews: -1
+      },
+      name: {
+        name: 1
+      }
     };
 
     const sort = sortMap[req.query.sort] || sortMap.newest;
 
     const [products, total] = await Promise.all([
       Product.find(filter)
+        .select(
+          'name slug price compareAtPrice images category rating reviews stock isFeatured isNewArrival active'
+        )
         .sort(sort)
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
 
       Product.countDocuments(filter)
     ]);
 
     res.json({
-      products, pagination: {
+      products,
+      pagination: {
         page,
         limit,
         total,
@@ -116,12 +135,16 @@ export async function getRelatedProducts(req, res) {
     }
 
     const products = await Product.find(filter)
+      .select(
+        'name slug price compareAtPrice images category rating reviews stock isFeatured isNewArrival'
+      )
       .sort({
         isFeatured: -1,
         rating: -1,
         createdAt: -1
       })
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     res.json({
       products
@@ -138,7 +161,7 @@ export async function getProduct(req, res) {
     const product = await Product.findOne({
       slug: req.params.slug,
       active: true
-    });
+    }).lean();
 
     if (!product) {
       return res.status(404).json({
@@ -205,9 +228,10 @@ export async function createProduct(req, res) {
     });
   } catch (error) {
     res.status(400).json({
-      message: error.code === 11000
-        ? 'Product slug already exists'
-        : error.message
+      message:
+        error.code === 11000
+          ? 'Product slug already exists'
+          : error.message
     });
   }
 }
@@ -265,9 +289,10 @@ export async function updateProduct(req, res) {
     });
   } catch (error) {
     res.status(400).json({
-      message: error.code === 11000
-        ? 'Product slug already exists'
-        : error.message
+      message:
+        error.code === 11000
+          ? 'Product slug already exists'
+          : error.message
     });
   }
 }
@@ -292,10 +317,14 @@ export async function deleteProduct(req, res) {
       });
     }
 
-    res.json({ success: true });
-  }
-  catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.json({
+      success: true
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 }
 
