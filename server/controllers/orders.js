@@ -12,7 +12,12 @@ export async function createOrder(req, res) {
   try {
     const orderData = JSON.parse(req.body.order || '{}');
 
-    const { customer, shippingAddress, items, utr } = orderData;
+    const {
+      customer,
+      shippingAddress,
+      items,
+      utr
+    } = orderData;
 
     if (
       !customer?.name ||
@@ -45,49 +50,57 @@ export async function createOrder(req, res) {
       });
     }
 
-    // Cloudinary upload se paymentProofUrl yahan generate karo.
-    if (!req.file) {
-      return res.status(400).json({
-        message: 'Payment screenshot is required.'
-      });
-    }
-
+    // Upload payment screenshot to Cloudinary.
     const result = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        {
-          folder: 'gift-zone/payment-proofs',
-          resource_type: 'image'
-        },
-        (error, data) => {
-          if (error) {
-            reject(error);
-            return;
-          }
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: 'gift-zone/payment-proofs',
+            resource_type: 'image'
+          },
+          (error, data) => {
+            if (error) {
+              reject(error);
+              return;
+            }
 
-          resolve(data);
-        }
-      ).end(req.file.buffer);
+            resolve(data);
+          }
+        )
+        .end(req.file.buffer);
     });
 
     const paymentProofUrl = result?.secure_url;
-    const productIds = items.map(item => item.productId);
 
-    if (productIds.some(
-      id => !mongoose.isValidObjectId(id)
-    )) {
+    const productIds = items.map(
+      item => item.productId
+    );
+
+    if (
+      productIds.some(
+        id => !mongoose.isValidObjectId(id)
+      )
+    ) {
       return res.status(400).json({
         message: 'One or more products are invalid.'
       });
     }
 
     const products = await Product.find({
-      _id: { $in: productIds },
+      _id: {
+        $in: productIds
+      },
       active: true
-    });
+    })
+      .select(
+        'name price stock images'
+      )
+      .lean();
 
     if (products.length !== productIds.length) {
       return res.status(400).json({
-        message: 'One or more products are no longer available.'
+        message:
+          'One or more products are no longer available.'
       });
     }
 
@@ -120,11 +133,13 @@ export async function createOrder(req, res) {
 
       if (product.stock < quantity) {
         return res.status(400).json({
-          message: `${product.name} has only ${product.stock} item(s) left.`
+          message:
+            `${product.name} has only ${product.stock} item(s) left.`
         });
       }
 
-      const lineTotal = product.price * quantity;
+      const lineTotal =
+        product.price * quantity;
 
       subtotal += lineTotal;
 
@@ -180,22 +195,28 @@ export async function createOrder(req, res) {
       paymentProofUrl: paymentProofUrl.trim()
     });
 
-    for (const item of orderItems) {
-      await Product.findByIdAndUpdate(
-        item.productId,
-        {
-          $inc: {
-            stock: -item.quantity
+    // Update all product stocks in parallel.
+    await Promise.all(
+      orderItems.map(item =>
+        Product.findByIdAndUpdate(
+          item.productId,
+          {
+            $inc: {
+              stock: -item.quantity
+            }
           }
-        }
-      );
-    }
+        )
+      )
+    );
 
     res.status(201).json({
       order
     });
   } catch (error) {
-    console.error('Create order error:', error);
+    console.error(
+      'Create order error:',
+      error
+    );
 
     res.status(400).json({
       message: error.message
@@ -206,11 +227,21 @@ export async function createOrder(req, res) {
 // Return orders that belong to the signed-in customer.
 export async function myOrders(req, res) {
   try {
-    const orders = await Order.find({ userId: req.userId }).sort({ createdAt: -1 });
-    res.json({ orders });
+    const orders = await Order.find({
+      userId: req.userId
+    })
+      .sort({
+        createdAt: -1
+      })
+      .lean();
 
+    res.json({
+      orders
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message
+    });
   }
 }
 
@@ -220,39 +251,60 @@ export async function getMyOrder(req, res) {
     const id = req.params.id;
 
     if (!id) {
-      return res.status(404).json({ message: 'Order id is required.' });
+      return res.status(404).json({
+        message: 'Order id is required.'
+      });
     }
 
     const order = await Order.findOne({
       _id: id,
       userId: req.userId
-    });
+    }).lean();
 
     if (!order) {
-      return res.status(404).json({ message: 'Order not found.' });
+      return res.status(404).json({
+        message: 'Order not found.'
+      });
     }
 
-    res.json({ order });
-
+    res.json({
+      order
+    });
   } catch (error) {
-    res.status(400).json({ message: 'Invalid order ID.' });
+    res.status(400).json({
+      message: 'Invalid order ID.'
+    });
   }
 }
 
 // Return the latest orders for the administrator dashboard.
 export async function listOrders(req, res) {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 }).limit(200);
-    res.json({ orders });
+    const orders = await Order.find()
+      .sort({
+        createdAt: -1
+      })
+      .limit(200)
+      .lean();
+
+    res.json({
+      orders
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message
+    });
   }
 }
 
 // Allow administrators to update only payment and fulfilment statuses.
 export async function updateOrder(req, res) {
   try {
-    const allowedFields = ['paymentStatus', 'orderStatus'];
+    const allowedFields = [
+      'paymentStatus',
+      'orderStatus'
+    ];
+
     const updates = {};
 
     for (const field of allowedFields) {
@@ -260,15 +312,28 @@ export async function updateOrder(req, res) {
         updates[field] = req.body[field];
       }
     }
-    const order = await Order.findByIdAndUpdate(req.params.id, updates, {
-      returnDocument: 'after',
-      runValidators: true
-    });
+
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      updates,
+      {
+        returnDocument: 'after',
+        runValidators: true
+      }
+    );
+
     if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+      return res.status(404).json({
+        message: 'Order not found'
+      });
     }
-    res.json({ order });
+
+    res.json({
+      order
+    });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({
+      message: error.message
+    });
   }
 }
