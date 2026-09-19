@@ -52,7 +52,7 @@ export default function OrderDetailsPage({ params }) {
       <main className="container-width section-pad">
         <div className="py-20 text-center">
           <h1 className="text-3xl font-extrabold">Order not found</h1>
-          <p className="mt-2 text-slate-500">This demo order may have been cleared from this browser.</p>
+          <p className="mt-2 text-slate-500">This order may have been cleared from this browser.</p>
           <Link href="/shop" className="mt-5 inline-block font-bold text-[#c92532]">Continue Shopping</Link>
         </div>
       </main>

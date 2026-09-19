@@ -1,6 +1,6 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-const paragraphs = ["Eligible products can be reported for damage, wrong item or major quality issue within 7 days of delivery.", "Please keep the original packaging and share clear photos when requesting a replacement.", "Personalized products may have additional restrictions. Replace this demo policy with your final business policy before launch."];
+const paragraphs = ["Eligible products can be reported for damage, wrong item or major quality issue within 7 days of delivery.", "Please keep the original packaging and share clear photos when requesting a replacement.", "Personalized products may have additional restrictions. Replace this policy with your final business policy before launch."];
 export default function Page() {
   return <>
 <Header />

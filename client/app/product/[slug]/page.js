@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
     Heart,
     Minus,
@@ -10,7 +10,9 @@ import {
     ShieldCheck,
     Truck,
     RotateCcw,
-    Star
+    Star,
+    Zap,
+    ShoppingCart
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -19,6 +21,7 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { apiFetch } from '@/lib/api';
 import Image from 'next/image';
+import ProductSkeleton from './ProductSkeleton';
 
 export default function ProductPage({ params }) {
     const { items, addToCart } = useCart();
@@ -32,6 +35,9 @@ export default function ProductPage({ params }) {
     const [quantity, setQuantity] = useState(1);
     const [activeImage, setActiveImage] = useState('');
     const [reviewMessage, setReviewMessage] = useState('');
+    const [getProductLoading, setGetProductLoading] = useState(false);
+
+    const router = useRouter();
 
     const [reviewForm, setReviewForm] = useState({
         name: '',
@@ -64,12 +70,11 @@ export default function ProductPage({ params }) {
     }, [params, routeSlug]);
 
     useEffect(() => {
-        if (!slug) {
-            return;
-        }
+        if (!slug) { return; }
 
         const getProduct = async () => {
             try {
+                setGetProductLoading(true);
                 const productData = await apiFetch(
                     `/api/products/${encodeURIComponent(slug)}`
                 );
@@ -107,15 +112,14 @@ export default function ProductPage({ params }) {
 
                 setReviews(reviewData || []);
             } catch (error) {
-                console.error(
-                    'Failed to fetch product:',
-                    error
-                );
-
+                console.error('Failed to fetch product:', error);
                 setProduct(null);
                 setProducts([]);
                 setReviews([]);
                 setActiveImage('');
+            }
+            finally {
+                setGetProductLoading(false);
             }
         };
 
@@ -175,9 +179,17 @@ export default function ProductPage({ params }) {
         addToCart(product, quantity);
     };
 
+    const handleBuyNow = () => {
+        router.push('/checkout');
+    };
+
     return (
         <>
             <Header cartCount={cartCount} />
+
+            {
+                getProductLoading && <ProductSkeleton />
+            }
 
             {product ? (
                 <main className="section-pad">
@@ -237,12 +249,11 @@ export default function ProductPage({ params }) {
                                                             image
                                                         )
                                                     }
-                                                    className={`relative h-20 w-27 overflow-hidden rounded-lg border-2 ${
-                                                        activeImage ===
+                                                    className={`relative h-20 w-27 overflow-hidden rounded-lg border-2 ${activeImage ===
                                                         image
-                                                            ? 'border-[#c92532]'
-                                                            : 'border-slate-200'
-                                                    }`}
+                                                        ? 'border-[#c92532]'
+                                                        : 'border-slate-200'
+                                                        }`}
                                                 >
                                                     <Image
                                                         src={image}
@@ -284,16 +295,16 @@ export default function ProductPage({ params }) {
 
                                     {product.compareAtPrice >
                                         product.price && (
-                                        <span className="text-base text-slate-400 line-through">
-                                            ₹
-                                            {Number(
-                                                product.compareAtPrice ||
+                                            <span className="text-base text-slate-400 line-through">
+                                                ₹
+                                                {Number(
+                                                    product.compareAtPrice ||
                                                     0
-                                            ).toLocaleString(
-                                                'en-IN'
-                                            )}
-                                        </span>
-                                    )}
+                                                ).toLocaleString(
+                                                    'en-IN'
+                                                )}
+                                            </span>
+                                        )}
                                 </div>
 
                                 <div className="mt-2 flex items-center gap-3">
@@ -326,72 +337,117 @@ export default function ProductPage({ params }) {
                                     </ul>
                                 )}
 
-                                <div className="mt-3 flex flex-wrap items-center gap-3">
-                                    <div className="flex items-center rounded-md border">
-                                        <button
-                                            type="button"
-                                            disabled={
-                                                quantity <= 1 ||
-                                                product.stock <=
+                                <div className="mt-3 flex md:flex-row flex-col md:items-center gap-3">
+                                    <div className="flex items-center gap-5">
+                                        <div className="flex items-center rounded-md border">
+                                            <button
+                                                type="button"
+                                                disabled={
+                                                    quantity <= 1 ||
+                                                    product.stock <=
                                                     0
-                                            }
-                                            onClick={() =>
-                                                setQuantity(
-                                                    value =>
-                                                        Math.max(
-                                                            1,
-                                                            value -
+                                                }
+                                                onClick={() =>
+                                                    setQuantity(
+                                                        value =>
+                                                            Math.max(
+                                                                1,
+                                                                value -
                                                                 1
-                                                        )
-                                                )
-                                            }
-                                            className="p-3 disabled:cursor-not-allowed disabled:opacity-40"
-                                        >
-                                            <Minus size={16} />
-                                        </button>
+                                                            )
+                                                    )
+                                                }
+                                                className="p-3 disabled:cursor-not-allowed! disabled:opacity-40"
+                                            >
+                                                <Minus size={16} />
+                                            </button>
 
-                                        <span className="w-10 text-center font-bold">
-                                            {quantity}
-                                        </span>
+                                            <span className="w-10 text-center font-bold">
+                                                {quantity}
+                                            </span>
 
-                                        <button
-                                            type="button"
-                                            disabled={
-                                                quantity >=
+                                            <button
+                                                type="button"
+                                                disabled={
+                                                    quantity >=
                                                     product.stock ||
-                                                product.stock <=
+                                                    product.stock <=
                                                     0
-                                            }
-                                            onClick={() =>
-                                                setQuantity(
-                                                    value =>
-                                                        Math.min(
-                                                            product.stock,
-                                                            value +
+                                                }
+                                                onClick={() =>
+                                                    setQuantity(
+                                                        value =>
+                                                            Math.min(
+                                                                product.stock,
+                                                                value +
                                                                 1
-                                                        )
+                                                            )
+                                                    )
+                                                }
+                                                className="p-3 disabled:cursor-not-allowed! disabled:opacity-40"
+                                            >
+                                                <Plus size={16} />
+                                            </button>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                toggleWishlist(
+                                                    product
                                                 )
                                             }
-                                            className="p-3 disabled:cursor-not-allowed disabled:opacity-40"
+                                            className="rounded-md md:hidden border p-2.5 text-[#c92532]"
                                         >
-                                            <Plus size={16} />
+                                            <Heart
+                                                size={20}
+                                                fill={
+                                                    isWishlisted(
+                                                        product
+                                                    )
+                                                        ? 'currentColor'
+                                                        : 'none'
+                                                }
+                                            />
                                         </button>
                                     </div>
 
-                                    <button
-                                        type="button"
-                                        disabled={
-                                            product.stock <= 0
-                                        }
-                                        onClick={
-                                            handleAddToCart
-                                        }
-                                        className="flex-1 rounded-md bg-[#c92532] px-6 py-3.5 text-sm font-bold text-white transition-all hover:bg-rose-600 disabled:cursor-not-allowed disabled:bg-slate-400"
-                                    >
-                                        {product.stock > 0
-                                            ? 'Add to Cart'
-                                            : 'Out of Stock'}
-                                    </button>
+                                    <div className="grid grid-cols-2 gap-1 flex-1 text-sm font-bold text-white">
+                                        <button
+                                            type="button"
+                                            disabled={
+                                                product.stock <= 0
+                                            }
+                                            onClick={
+                                                handleAddToCart
+                                            }
+                                            className="py-3 flex items-center justify-center rounded-md gap-2 transition-all bg-[#c92532] hover:bg-rose-600 disabled:cursor-not-allowed! disabled:opacity-50"
+                                        >
+                                            <ShoppingCart
+                                                size={14}
+                                                fill="currentColor"
+                                                strokeWidth={2.2}
+                                                className="shrink-0 sm:h-4 sm:w-4"
+                                            />
+                                            {product.stock > 0
+                                                ? 'Add to Cart'
+                                                : 'Out of Stock'}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            disabled={product.stock == 0}
+                                            onClick={handleBuyNow}
+                                            className="py-3 flex items-center justify-center rounded-md gap-2 transition-all bg-[#c92532] hover:bg-rose-600 disabled:cursor-not-allowed! disabled:opacity-50"
+                                        >
+                                            <Zap
+                                                size={14}
+                                                fill="currentColor"
+                                                strokeWidth={2.2}
+                                                className="shrink-0 sm:h-4 sm:w-4"
+                                            /> Buy Now
+                                        </button>
+                                    </div>
 
                                     <button
                                         type="button"
@@ -400,7 +456,7 @@ export default function ProductPage({ params }) {
                                                 product
                                             )
                                         }
-                                        className="rounded-md border p-3 text-[#c92532]"
+                                        className="rounded-md hidden md:block border p-3 text-[#c92532]"
                                     >
                                         <Heart
                                             size={20}

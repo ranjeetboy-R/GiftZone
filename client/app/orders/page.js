@@ -65,7 +65,7 @@ export default function OrdersPage() {
           </Link>)}</div> : <div className="mt-10 rounded-xl border p-10 text-center">
           <div className="text-6xl">📦</div>
           <h2 className="mt-4 text-xl font-bold">No orders yet</h2>
-          <p className="mt-2 text-sm text-slate-500">Your completed demo orders will appear here.</p>
+          <p className="mt-2 text-sm text-slate-500">Your completed orders will appear here.</p>
           <Link href="/shop" className="mt-5 inline-block text-sm font-bold text-[#c92532]">Start Shopping</Link>
         </div>}</Show>
       </div>

@@ -12,8 +12,6 @@ import {
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
-const SAVED_EMAIL_KEY = "gift-zone-admin-email";
-
 const page = () => {
     const [loginLoading, setLoginLoading] = useState(false);
     const [email, setEmail] = useState("");
@@ -22,6 +20,8 @@ const page = () => {
     const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState("");
     const router = useRouter();
+
+    const SAVED_EMAIL_KEY = email;
 
     useEffect(() => {
         const savedEmail = localStorage.getItem(SAVED_EMAIL_KEY);
