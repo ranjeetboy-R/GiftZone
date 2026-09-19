@@ -157,7 +157,7 @@ export default function ProductCard({ product }) {
                         type="button"
                         onClick={() => addToCart(product)}
                         disabled={isOutOfStock}
-                        className="flex min-h-10 outline-none items-center justify-center col-span-1 gap-1 rounded-lg border border-[#c92532] bg-white px-2 py-2.5 text-[10px] font-bold text-[#c92532] transition-all duration-300 hover:bg-[#fff0ed] active:scale-[0.98] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 sm:gap-1.5 sm:rounded-xl sm:text-xs"
+                        className="flex min-h-10 outline-none items-center justify-center col-span-1 gap-1 rounded-lg border border-[#c92532] bg-white px-2 py-2.5 text-[10px] font-bold text-[#c92532] transition-all duration-300 hover:bg-[#fff0ed] active:scale-[0.98] disabled:cursor-not-allowed! disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 sm:gap-1.5 sm:rounded-xl sm:text-xs"
                     >
                         <ShoppingCart
                             size={14}
@@ -174,7 +174,7 @@ export default function ProductCard({ product }) {
                         type="button"
                         onClick={handleBuyNow}
                         disabled={isOutOfStock}
-                        className="flex min-h-10 outline-none items-center justify-center gap-1 col-span-2 md:col-span-1 rounded-lg bg-[#c92532] px-2 py-2.5 text-[10px] font-bold text-white shadow-sm transition-all duration-300 hover:bg-[#a91d29] hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none sm:gap-1.5 sm:rounded-xl sm:text-xs"
+                        className="flex min-h-10 outline-none items-center justify-center gap-1 col-span-2 md:col-span-1 rounded-lg bg-[#c92532] px-2 py-2.5 text-[10px] font-bold text-white shadow-sm transition-all duration-300 hover:bg-[#a91d29] hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed! disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none sm:gap-1.5 sm:rounded-xl sm:text-xs"
                     >
                         <Zap
                             size={14}

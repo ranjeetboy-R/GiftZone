@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@clerk/nextjs";
 import { X, Upload, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import toast from "react-hot-toast";
@@ -36,8 +35,6 @@ const ProductForm = ({
     const [uploadLoading, setUploadLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState([]);
-
-    const { getToken } = useAuth();
 
     useEffect(() => {
         if (Array.isArray(categoriesData)) {
@@ -99,12 +96,6 @@ const ProductForm = ({
             setUploadLoading(true);
             showError("");
 
-            const token = await getToken();
-
-            if (!token) {
-                throw new Error("Admin authentication required.");
-            }
-
             const uploadedImages = [];
 
             for (const file of files) {
@@ -126,7 +117,6 @@ const ProductForm = ({
                 const data = await apiFetch("/api/upload", {
                     method: "POST",
                     body: formData,
-                    token
                 });
 
                 if (!data?.url) {
@@ -241,12 +231,6 @@ const ProductForm = ({
                 throw new Error(validationError);
             }
 
-            const token = await getToken();
-
-            if (!token) {
-                throw new Error("Admin authentication required.");
-            }
-
             const payload = {
                 name: productForm.name.trim(),
                 slug: productForm.slug.trim(),
@@ -271,7 +255,6 @@ const ProductForm = ({
                     {
                         method: "PATCH",
                         body: JSON.stringify(payload),
-                        token
                     }
                 );
 
@@ -280,7 +263,6 @@ const ProductForm = ({
                 await apiFetch("/api/products", {
                     method: "POST",
                     body: JSON.stringify(payload),
-                    token
                 });
 
                 showSuccess("Product added successfully.");

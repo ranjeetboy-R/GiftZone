@@ -5,11 +5,13 @@
     "phone": "+91 98765 43210",
     "email": "hello@giftzone.in"
   },
+
   "announcement": [
     "Free Shipping on Orders Above \u20b9999",
     "Same Day Dispatch on Selected Products",
     "Easy 7-Day Replacement"
   ],
+
   "hero": {
     "eyebrow": "Quality products for everyday life",
     "title": "Shop What You Need, All in One Place",
@@ -17,15 +19,17 @@
     "primaryCta": "Shop Now",
     "secondaryCta": "Explore Collections"
   },
+
   "payment": {
-    "qrImage": "/images/payment/qr-placeholder.svg",
-    "accountName": "Gift Zone Demo Store",
-    "bankName": "Demo Bank",
-    "accountNumber": "123456789012",
-    "ifsc": "DEMO0001234",
-    "upi": "giftzone-demo@upi",
+    "qrImage": "/images/payment/qr-placeholder.jpeg",
+    "accountName": "Gift Zone Sell Store",
+    "bankName": "Airtel payment bank",
+    "accountNumber": "7079459758",
+    "ifsc": "AIRP0000001",
+    "upi": "pandeyvisu995-3@okaxis",
     "note": "Please complete the payment and submit your UTR with a clear payment screenshot to confirm your order."
   },
+
   "categories": [
     {
       "slug": "electronics-gadgets",
@@ -88,6 +92,7 @@
       "count": 0
     }
   ],
+
   "why": [
     {
       "title": "Chosen for Quality",
@@ -110,6 +115,7 @@
       "icon": "Headphones"
     }
   ],
+  
   "testimonials": [
     {
       "name": "Priya Sharma",
