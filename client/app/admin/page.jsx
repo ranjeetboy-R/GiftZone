@@ -7,7 +7,6 @@ import DashboardStats from './adminComponents/DashboardStats';
 import RecentOrders from './adminComponents/RecentOrders';
 import InventoryAlerts from './adminComponents/InventoryAlerts';
 import QuickActions from './adminComponents/QuickActions';
-import { useRouter } from 'next/navigation';
 
 export default function AdminPage() {
     const [products, setProducts] = useState([]);
@@ -15,20 +14,6 @@ export default function AdminPage() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
-    const router = useRouter();
-
-    // Verify admin 
-    useEffect(() => {
-        const checkAdminSession = async () => {
-            try {
-                await apiFetch('/api/admin/verify-admin');
-            } catch {
-                router.replace('/adminLogin');
-            }
-        };
-
-        checkAdminSession();
-    }, [router]);
 
     const loadDashboard = async (isRefresh = false) => {
         try {

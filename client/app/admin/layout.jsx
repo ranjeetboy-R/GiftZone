@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname, } from 'next/navigation';
+import { usePathname, useRouter, } from 'next/navigation';
 import Link from 'next/link';
 
 import {
@@ -15,6 +15,7 @@ import {
     useEffect,
     useState
 } from 'react';
+import toast from 'react-hot-toast';
 
 const navLinks = [
     {
@@ -34,8 +35,23 @@ const navLinks = [
 export default function layout({ children }) {
     const pathname = usePathname();
 
-    const [mobileMenuOpen, setMobileMenuOpen] =
-        useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    const router = useRouter();
+
+    // Verify admin 
+    useEffect(() => {
+        const checkAdminSession = async () => {
+            try {
+                await apiFetch('/api/admin/verify-admin');
+            } catch {
+                router.replace('/adminLogin');
+                toast('Login to access admin pannel');
+            }
+        };
+
+        checkAdminSession();
+    }, [router]);
 
     useEffect(() => {
         setMobileMenuOpen(false);
@@ -47,7 +63,7 @@ export default function layout({ children }) {
         );
 
         if (data?.success) {
-            window.location.reload();
+            router.replace('/adminLogin');
         }
     };
 

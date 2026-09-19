@@ -17,7 +17,7 @@ const storyScript = Story_Script({
 });
 
 export const metadata = {
-  metadataBase: new URL("https://giftzonesell.vercel.app"),
+  metadataBase: new URL("https://giftzoneselling.vercel.app"),
 
   title: {
     default: "Gift Zone | Shop Everything You Need",
