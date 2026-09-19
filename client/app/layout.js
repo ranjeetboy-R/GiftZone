@@ -16,6 +16,11 @@ const storyScript = Story_Script({
   weight: "400"
 });
 
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+if (!PUBLISHABLE_KEY) {
+  console.log("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY not found");
+}
+
 export const metadata = {
   metadataBase: new URL("https://giftzoneselling.vercel.app"),
 
@@ -90,14 +95,16 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  return <ClerkProvider>
+  return (
     <html lang="en">
       <body className={`${commissioner.className} ${storyScript.variable}`}>
-        <AppProviders>
-          {children}
-          <Toaster />
-        </AppProviders>
+        <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+          <AppProviders>
+            {children}
+            <Toaster />
+          </AppProviders>
+        </ClerkProvider>
       </body>
     </html>
-  </ClerkProvider>;
+  )
 }
