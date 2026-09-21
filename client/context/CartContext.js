@@ -19,6 +19,7 @@ export function CartProvider({
   useEffect(() => {
     if (hydrated) localStorage.setItem('gift-zone-cart', JSON.stringify(items));
   }, [items, hydrated]);
+
   const addToCart = (product, quantity = 1) => {
     const id = product._id || product.id || product.slug;
     const stock = Number(product.stock ?? 999);
@@ -37,6 +38,7 @@ export function CartProvider({
       }];
     });
   };
+
   const updateQuantity = (id, quantity) => {
     setItems(current => current.map(item => {
       if ((item._id || item.id || item.slug) !== id) return item;
@@ -48,6 +50,7 @@ export function CartProvider({
       };
     }).filter(item => item.quantity > 0));
   };
+  
   const removeFromCart = id => {
     setItems(current => current.filter(item => (item._id || item.id || item.slug) !== id));
   };

@@ -39,7 +39,7 @@ const PaymentProof = ({ order }) => {
                         <img
                             src={order.paymentProofUrl}
                             alt="Payment proof"
-                            className="max-h-105 w-full object-contain"
+                            className="md:max-h-80 max-h-50 w-full object-cover"
                         />
                     </a>
                 </div>

@@ -24,11 +24,11 @@ import Image from 'next/image';
 import ProductSkeleton from './ProductSkeleton';
 
 const sizes = [
-    {title: 's'},
-    {title: 'm'},
-    {title: 'l'},
-    {title: 'xl'},
-    {title: 'xxl'},
+    { title: 's' },
+    { title: 'm' },
+    { title: 'l' },
+    { title: 'xl' },
+    { title: 'xxl' },
 ]
 
 export default function ProductPage({ params }) {
@@ -189,8 +189,11 @@ export default function ProductPage({ params }) {
     };
 
     const handleBuyNow = () => {
+        if (cartCount === 0) {
+            handleAddToCart();
+        }
         router.push('/checkout');
-    };    
+    };
 
     return (
         <>
@@ -318,17 +321,51 @@ export default function ProductPage({ params }) {
 
                                 {/* Sizes  */}
                                 {
-                                    (product.category === 'fashion-men' ||
-                                    product.category === 'fashion-women') &&
-                                    <div className="mt-5 flex items-center gap-3">
-                                        {
-                                            sizes?.map((size) => (
-                                                <button 
-                                                onClick={()=> setSelectedSize(size.title)}
-                                                key={size.title} className={`${size.title === selectedSize ? 'bg-stone-800 text-white' : ''} w-10 h-10 text-sm flex items-center justify-center uppercase font-semibold border border-slate-400 rounded-md`}>{size.title}</button>
-                                            ))
-                                        }
-                                    </div>
+                                    (
+                                        product.category === 'fashion-men' ||
+                                        product.category === 'fashion-women' ||
+                                        product.category === 'fashion-kids'
+                                    ) &&
+
+                                    ![
+                                        'saree',
+                                        'dupatta',
+                                        'shawl',
+                                        'muffler',
+                                        'tie',
+                                        'dhoti',
+                                        'lungi',
+                                        'gamcha',
+                                        'chunni',
+                                        'cape',
+                                    ].some(keyword =>
+                                        `${product.name || ''}`
+                                            .toLowerCase()
+                                            .includes(keyword)
+                                    ) &&
+
+                                    sizes?.length > 0 && (
+                                        <div className="mt-5 flex items-center gap-3">
+                                            {sizes.map((size) => (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedSize(size.title)}
+                                                    key={size.title}
+                                                    className={`
+                                                            w-10 h-10 text-sm flex items-center justify-center
+                                                            uppercase font-semibold border border-slate-400 rounded-md
+                                                            transition-all duration-200
+                                                            ${size.title === selectedSize
+                                                            ? 'bg-stone-800 text-white border-stone-800'
+                                                            : 'hover:bg-stone-100 hover:border-stone-800'
+                                                        }
+                                                        `}
+                                                >
+                                                    {size.title}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )
                                 }
 
                                 <div className="mt-5 flex items-center gap-3">

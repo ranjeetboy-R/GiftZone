@@ -52,7 +52,7 @@ const OrderDetails = ({
             <div className="flex md:max-h-[92vh] h-screen w-full max-w-5xl flex-col overflow-hidden md:rounded-2xl bg-white shadow-2xl">
                 <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
                     <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex md:mt-0 mt-3 items-center gap-2">
                             <h2 className="text-xl font-extrabold text-slate-900">
                                 Order Details
                             </h2>
