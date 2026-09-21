@@ -366,16 +366,6 @@ export default function CheckoutPage() {
             value: payment.bankName
         },
         {
-            label: 'Account Number',
-            value: payment.accountNumber,
-            copy: true
-        },
-        {
-            label: 'IFSC',
-            value: payment.ifsc,
-            copy: true
-        },
-        {
             label: 'UPI ID',
             value: payment.upi,
             copy: true
@@ -673,6 +663,58 @@ export default function CheckoutPage() {
                                                 <p className="mt-4 text-center text-xs leading-5 text-slate-400">
                                                     Scan the QR code with your preferred UPI app.
                                                 </p>
+
+                                                <button
+                                                    type="button"
+                                                    className="group md:hidden relative w-full mt-5 overflow-hidden rounded-2xl
+                                                        bg-linear-to-r from-amber-400 via-yellow-300 to-amber-400
+                                                        px-6 py-3.5
+                                                        font-bold text-gray-900
+                                                        shadow-[0_8px_30px_rgba(245,158,11,0.25)]
+                                                        transition-all duration-300
+                                                        hover:-translate-y-0.5
+                                                        hover:shadow-[0_12px_35px_rgba(245,158,11,0.45)]
+                                                        active:scale-[0.97] "
+                                                    onClick={() => {
+                                                        window.location.href =
+                                                            `upi://pay?pa=pandeyvisu995-3@okaxis&pn=SellZone&am=${subtotal}&cu=INR`;
+                                                    }}
+                                                >
+                                                    {/* Shine effect */}
+                                                    <span
+                                                        className=" absolute inset-0 -translate-x-full
+                                                            bg-linear-to-r from-transparent via-white/50 to-transparent
+                                                            transition-transform duration-700
+                                                            group-hover:translate-x-full  "
+                                                    />
+
+                                                    {/* Button content */}
+                                                    <span className="relative flex items-center justify-center gap-2">
+                                                        <svg
+                                                            className="h-5 w-5 transition-transform duration-300 group-hover:scale-110"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                        >
+                                                            <path d="M12 3v18" />
+                                                            <path d="M17 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H7" />
+                                                        </svg>
+
+                                                        <span>Pay Now</span>
+
+                                                        <svg
+                                                            className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                        >
+                                                            <path d="M5 12h14" />
+                                                            <path d="m13 6 6 6-6 6" />
+                                                        </svg>
+                                                    </span>
+                                                </button>
                                             </div>
 
                                             <div className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -783,8 +825,8 @@ export default function CheckoutPage() {
                                                 <label
                                                     htmlFor="payment-proof"
                                                     className={`group relative flex cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed p-5 transition ${proof
-                                                            ? 'border-emerald-300 bg-emerald-50/50'
-                                                            : 'border-slate-200 bg-slate-50 hover:border-[#c92532]/40 hover:bg-[#fff7f3]'
+                                                        ? 'border-emerald-300 bg-emerald-50/50'
+                                                        : 'border-slate-200 bg-slate-50 hover:border-[#c92532]/40 hover:bg-[#fff7f3]'
                                                         }`}
                                                 >
                                                     <input
@@ -797,8 +839,8 @@ export default function CheckoutPage() {
 
                                                     <div
                                                         className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${proof
-                                                                ? 'bg-emerald-100 text-emerald-600'
-                                                                : 'bg-white text-[#c92532] shadow-sm'
+                                                            ? 'bg-emerald-100 text-emerald-600'
+                                                            : 'bg-white text-[#c92532] shadow-sm'
                                                             }`}
                                                     >
                                                         {proof ? (
@@ -848,8 +890,8 @@ export default function CheckoutPage() {
                                                     className={`flex items-start gap-3 rounded-2xl p-4 text-sm font-semibold ${message.includes(
                                                         'copied successfully'
                                                     )
-                                                            ? 'bg-emerald-50 text-emerald-700'
-                                                            : 'bg-red-50 text-[#c92532]'
+                                                        ? 'bg-emerald-50 text-emerald-700'
+                                                        : 'bg-red-50 text-[#c92532]'
                                                         }`}
                                                 >
                                                     {message.includes(
