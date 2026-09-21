@@ -4,8 +4,8 @@ import Product from '../models/Product.js';
 import cloudinary from '../config/cloudinary.js';
 
 // Shipping charges are waived when the order meets this minimum value.
-const SHIPPING_FEE = 79;
-const FREE_SHIPPING_MINIMUM = 999;
+const SHIPPING_FEE = 0;
+const FREE_SHIPPING_MINIMUM = 299;
 
 // Validate the purchase, reserve stock, and create a pending order.
 export async function createOrder(req, res) {
