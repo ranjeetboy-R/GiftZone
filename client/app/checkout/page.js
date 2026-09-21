@@ -12,12 +12,14 @@ import {
     Clipboard,
     CreditCard,
     FileImage,
+    IndianRupee,
     LockKeyhole,
     MapPin,
     PackageCheck,
     QrCode,
     ShieldCheck,
     ShoppingBag,
+    Trash2,
     Upload,
     UserRound,
     WalletCards,
@@ -35,7 +37,7 @@ const SHIPPING_FEE = 79;
 const MAX_PROOF_SIZE = 5 * 1024 * 1024;
 
 export default function CheckoutPage() {
-    const { items, clearCart } = useCart();
+    const { items, clearCart, removeFromCart } = useCart();
     const { isSignedIn, getToken } = useAuth();
     const { user } = useUser();
     const router = useRouter();
@@ -619,6 +621,54 @@ export default function CheckoutPage() {
                                             </div>
                                         </div>
 
+                                        <div className="flex flex-col border border-slate-200 md:hidden rounded-2xl p-5 bg-slate-50 mt-5">
+                                            <p className='font-medium'>Pay Securely via UPI</p>
+                                            <button
+                                                type="button"
+                                                className="group relative w-full mt-5 overflow-hidden rounded-2xl
+                                                        bg-linear-to-r from-amber-400 via-yellow-300 to-amber-400
+                                                        px-6 py-3.5
+                                                        font-bold text-gray-900
+                                                        shadow-[0_8px_30px_rgba(245,158,11,0.25)]
+                                                        transition-all duration-300
+                                                        hover:-translate-y-0.5
+                                                        hover:shadow-[0_12px_35px_rgba(245,158,11,0.45)]
+                                                        active:scale-[0.97] "
+                                                onClick={() => {
+                                                    window.location.href =
+                                                        `upi://pay?pa=pandeyvisu995-3@okaxis&pn=SellZone&am=${subtotal}&cu=INR`;
+                                                }}
+                                            >
+                                                {/* Shine effect */}
+                                                <span
+                                                    className=" absolute inset-0 -translate-x-full
+                                                            bg-linear-to-r from-transparent via-white/50 to-transparent
+                                                            transition-transform duration-700
+                                                            group-hover:translate-x-full  "
+                                                />
+
+                                                {/* Button content */}
+                                                <span className="relative flex items-center justify-center gap-2">
+                                                    <IndianRupee size={15} />
+                                                    {subtotal}
+                                                    <span>Pay Now</span>
+
+                                                    <svg
+                                                        className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                    >
+                                                        <path d="M5 12h14" />
+                                                        <path d="m13 6 6 6-6 6" />
+                                                    </svg>
+                                                </span>
+                                            </button>
+
+                                            <p className='text-xs mt-5 text-slate-400 text-center'>Having trouble with payment? Please try another UPI app like Google Pay, PhonePe, or Paytm.</p>
+                                        </div>
+
                                         <div className="mt-6 grid gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                                             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                                                 <div className="flex items-center justify-between gap-3">
@@ -663,58 +713,6 @@ export default function CheckoutPage() {
                                                 <p className="mt-4 text-center text-xs leading-5 text-slate-400">
                                                     Scan the QR code with your preferred UPI app.
                                                 </p>
-
-                                                <button
-                                                    type="button"
-                                                    className="group md:hidden relative w-full mt-5 overflow-hidden rounded-2xl
-                                                        bg-linear-to-r from-amber-400 via-yellow-300 to-amber-400
-                                                        px-6 py-3.5
-                                                        font-bold text-gray-900
-                                                        shadow-[0_8px_30px_rgba(245,158,11,0.25)]
-                                                        transition-all duration-300
-                                                        hover:-translate-y-0.5
-                                                        hover:shadow-[0_12px_35px_rgba(245,158,11,0.45)]
-                                                        active:scale-[0.97] "
-                                                    onClick={() => {
-                                                        window.location.href =
-                                                            `upi://pay?pa=pandeyvisu995-3@okaxis&pn=SellZone&am=${subtotal}&cu=INR`;
-                                                    }}
-                                                >
-                                                    {/* Shine effect */}
-                                                    <span
-                                                        className=" absolute inset-0 -translate-x-full
-                                                            bg-linear-to-r from-transparent via-white/50 to-transparent
-                                                            transition-transform duration-700
-                                                            group-hover:translate-x-full  "
-                                                    />
-
-                                                    {/* Button content */}
-                                                    <span className="relative flex items-center justify-center gap-2">
-                                                        <svg
-                                                            className="h-5 w-5 transition-transform duration-300 group-hover:scale-110"
-                                                            viewBox="0 0 24 24"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            strokeWidth="2"
-                                                        >
-                                                            <path d="M12 3v18" />
-                                                            <path d="M17 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H7" />
-                                                        </svg>
-
-                                                        <span>Pay Now</span>
-
-                                                        <svg
-                                                            className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
-                                                            viewBox="0 0 24 24"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            strokeWidth="2"
-                                                        >
-                                                            <path d="M5 12h14" />
-                                                            <path d="m13 6 6 6-6 6" />
-                                                        </svg>
-                                                    </span>
-                                                </button>
                                             </div>
 
                                             <div className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -1017,15 +1015,26 @@ export default function CheckoutPage() {
                                                             </p>
                                                         </div>
 
-                                                        <p className="shrink-0 text-sm font-extrabold text-slate-900">
-                                                            ₹
-                                                            {(
-                                                                price *
-                                                                quantity
-                                                            ).toLocaleString(
-                                                                'en-IN'
-                                                            )}
-                                                        </p>
+                                                        <div className="flex flex-col">
+                                                            <p className="shrink-0 text-sm font-extrabold text-slate-900">
+                                                                ₹
+                                                                {(
+                                                                    price *
+                                                                    quantity
+                                                                ).toLocaleString(
+                                                                    'en-IN'
+                                                                )}
+                                                            </p>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeFromCart(itemId)}
+                                                                aria-label={`Remove ${item.name || 'product'} from cart`}
+                                                                className="text-slate-400 hover:text-red-600 p-2"
+                                                            >
+                                                                <Trash2 size={18} />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 );
                                             })}
