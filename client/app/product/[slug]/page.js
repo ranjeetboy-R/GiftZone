@@ -23,6 +23,14 @@ import { apiFetch } from '@/lib/api';
 import Image from 'next/image';
 import ProductSkeleton from './ProductSkeleton';
 
+const sizes = [
+    {title: 's'},
+    {title: 'm'},
+    {title: 'l'},
+    {title: 'xl'},
+    {title: 'xxl'},
+]
+
 export default function ProductPage({ params }) {
     const { items, addToCart } = useCart();
     const { toggleWishlist, isWishlisted } = useWishlist();
@@ -36,6 +44,7 @@ export default function ProductPage({ params }) {
     const [activeImage, setActiveImage] = useState('');
     const [reviewMessage, setReviewMessage] = useState('');
     const [getProductLoading, setGetProductLoading] = useState(false);
+    const [selectedSize, setSelectedSize] = useState('m');
 
     const router = useRouter();
 
@@ -181,7 +190,7 @@ export default function ProductPage({ params }) {
 
     const handleBuyNow = () => {
         router.push('/checkout');
-    };
+    };    
 
     return (
         <>
@@ -220,7 +229,7 @@ export default function ProductPage({ params }) {
                                         href={activeImage}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="relative block aspect-video overflow-hidden rounded-2xl border border-slate-300 bg-[#fff7f3] shadow-lg"
+                                        className="relative block md:aspect-video md:h-auto h-150 overflow-hidden rounded-2xl border border-slate-300 bg-[#fff7f3] shadow-lg"
                                     >
                                         <Image
                                             src={activeImage}
@@ -307,7 +316,22 @@ export default function ProductPage({ params }) {
                                         )}
                                 </div>
 
-                                <div className="mt-2 flex items-center gap-3">
+                                {/* Sizes  */}
+                                {
+                                    (product.category === 'fashion-men' ||
+                                    product.category === 'fashion-women') &&
+                                    <div className="mt-5 flex items-center gap-3">
+                                        {
+                                            sizes?.map((size) => (
+                                                <button 
+                                                onClick={()=> setSelectedSize(size.title)}
+                                                key={size.title} className={`${size.title === selectedSize ? 'bg-stone-800 text-white' : ''} w-10 h-10 text-sm flex items-center justify-center uppercase font-semibold border border-slate-400 rounded-md`}>{size.title}</button>
+                                            ))
+                                        }
+                                    </div>
+                                }
+
+                                <div className="mt-5 flex items-center gap-3">
                                     <span className="flex items-center gap-1 text-amber-500">
                                         <Star
                                             size={16}
@@ -337,7 +361,7 @@ export default function ProductPage({ params }) {
                                     </ul>
                                 )}
 
-                                <div className="mt-3 flex md:flex-row flex-col md:items-center gap-3">
+                                <div className="mt-5 flex md:flex-row flex-col md:items-center gap-5">
                                     <div className="flex items-center gap-5">
                                         <div className="flex items-center rounded-md border">
                                             <button

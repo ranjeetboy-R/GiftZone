@@ -85,7 +85,7 @@ export async function listProducts(req, res) {
     const [products, total] = await Promise.all([
       Product.find(filter)
         .select(
-          'name slug price compareAtPrice images category rating reviews stock isFeatured isNewArrival active'
+          'name slug price description compareAtPrice images category rating reviews stock isFeatured isNewArrival active'
         )
         .sort(sort)
         .skip(skip)
