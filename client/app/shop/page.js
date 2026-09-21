@@ -12,7 +12,7 @@ import { useCart } from '@/context/CartContext';
 import { apiFetch } from '@/lib/api';
 import { Search, X } from 'lucide-react';
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 12;
 
 const SORT_OPTIONS = [
   {
@@ -83,7 +83,7 @@ export default function ShopPage() {
   const [error, setError] = useState('');
 
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState('allCategories');
   const [sort, setSort] = useState('newest');
 
   const [page, setPage] = useState(1);
@@ -209,6 +209,13 @@ export default function ShopPage() {
    * - Sort change
    * - Pagination
    */
+
+  useEffect(() => {
+    updateUrl({
+      category: ''
+    });
+  }, [])
+
   useEffect(() => {
     let cancelled = false;
 
