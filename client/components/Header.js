@@ -76,6 +76,7 @@ export default function Header({
           <Show when="signed-in">
             <UserButton />
           </Show>
+          
           <button type="button" onClick={() => setMenu(!menu)} className="lg:hidden" aria-label="Toggle menu">
             {menu ? <X size={23} /> : <Menu size={23} />}
           </button>
