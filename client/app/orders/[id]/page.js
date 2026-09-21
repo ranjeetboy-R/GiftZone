@@ -133,7 +133,7 @@ export default function OrderDetailsPage({ params }) {
               </div>
               <div className="flex justify-between">
                 <span>Shipping</span>
-                <span>{order.shipping ? `₹${order.shipping}` : 'Free'}</span>
+                <span>Free</span>
               </div>
               <div className="my-2 border-t" />
               <div className="flex justify-between text-lg font-extrabold">

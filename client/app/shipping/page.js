@@ -1,7 +1,7 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-const paragraphs = ["Orders are generally dispatched within 1–2 business days. Delivery usually takes 3–7 business days depending on destination.", "Orders above ₹999 receive free standard shipping in this. Other orders use a ₹79 standard shipping fee.", "Remote areas and festive periods may require additional time."];
+const paragraphs = ["Orders are generally dispatched within 1–2 business days. Delivery usually takes 3–7 business days depending on destination.", "Orders above ₹999 receive free standard shipping in this. Other orders use a ₹0 standard shipping fee.", "Remote areas and festive periods may require additional time."];
 
 export default function Page() {
 
