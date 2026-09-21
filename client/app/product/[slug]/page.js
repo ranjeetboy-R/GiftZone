@@ -249,7 +249,7 @@ export default function ProductPage({ params }) {
                                                             image
                                                         )
                                                     }
-                                                    className={`relative h-20 w-27 overflow-hidden rounded-lg border-2 ${activeImage ===
+                                                    className={`relative md:h-20 md:w-27 w-25 h-17 overflow-hidden rounded-lg border-2 ${activeImage ===
                                                         image
                                                         ? 'border-[#c92532]'
                                                         : 'border-slate-200'

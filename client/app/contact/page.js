@@ -20,11 +20,11 @@ export default function ContactPage() {
           <div className="mt-8 grid gap-4">
             <div className="rounded-xl bg-[#fff7f3] p-5">
               <p className="text-xs font-bold uppercase text-slate-400">Phone</p>
-              <p className="mt-1 font-bold">+91 98765 43210</p>
+              <p className="mt-1 font-bold">+91 7079459758</p>
             </div>
             <div className="rounded-xl bg-[#fff7f3] p-5">
               <p className="text-xs font-bold uppercase text-slate-400">Email</p>
-              <p className="mt-1 font-bold">hello@giftzone.in</p>
+              <p className="mt-1 font-bold">giftzone.support@gmail.com</p>
             </div>
           </div>
         </div>
