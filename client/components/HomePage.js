@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -37,6 +37,10 @@ const normalizeProduct = product => ({
   image: product.images?.[0] || product.image
 });
 
+const shuffle = (array) => {
+  return [...array].sort(() => Math.random() - 0.5);
+};
+
 export default function HomePage() {
   const { items } = useCart();
 
@@ -52,7 +56,7 @@ export default function HomePage() {
         setLoading(true);
 
         const [productData, categoryData] = await Promise.all([
-          apiFetch('/api/products?limit=100'),
+          apiFetch('/api/products?limit=50'),
           apiFetch('/api/products/categories')
         ]);
 
@@ -94,13 +98,17 @@ export default function HomePage() {
     0
   );
 
-  const best = products
-    .filter(product => product.isFeatured === true)
-    .slice(0, 4);
+  const best = useMemo(() => {
+    return shuffle(
+      products.filter(product => product.isFeatured === true)
+    ).slice(0, 8);
+  }, [products]);
 
-  const newest = products
-    .filter(product => product.isNewArrival === true)
-    .slice(0, 4);
+  const newest = useMemo(() => {
+    return shuffle(
+      products.filter(product => product.isNewArrival === true)
+    ).slice(0, 8);
+  }, [products]);
 
   const businessProducts = products.slice(8, 12);
 
@@ -399,7 +407,7 @@ export default function HomePage() {
               </p>
             </div>
 
-              <Testimonials />
+            <Testimonials />
           </div>
         </section>
 
