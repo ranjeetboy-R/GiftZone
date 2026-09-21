@@ -273,46 +273,6 @@ export default function CartPage() {
                   </span>
                 </div>
 
-                <div className="mt-5 rounded-lg bg-slate-50 p-4">
-                  <div className="flex items-center gap-2 text-sm font-bold">
-                    <Tag size={16} />
-                    Coupon Code
-                  </div>
-
-                  <div className="mt-3 flex gap-2">
-                    <input
-                      value={coupon}
-                      onChange={event => {
-                        setCoupon(event.target.value);
-                        setCouponMessage('');
-                      }}
-                      onKeyDown={event => {
-                        if (event.key === 'Enter') {
-                          applyCoupon();
-                        }
-                      }}
-                      placeholder="WELCOME10"
-                      autoComplete="off"
-                      className="min-w-0 flex-1 rounded-md border px-3 py-2.5 text-sm"
-                    />
-
-                    <button
-                      type="button"
-                      onClick={applyCoupon}
-                      disabled={couponLoading}
-                      className="rounded-md bg-slate-900 px-4 py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {couponLoading ? 'Applying...' : 'Apply'}
-                    </button>
-                  </div>
-
-                  {couponMessage && (
-                    <p className="mt-2 text-xs font-semibold text-[#c92532]">
-                      {couponMessage}
-                    </p>
-                  )}
-                </div>
-
                 {discount > 0 && (
                   <div className="mt-3 flex justify-between text-sm text-green-600">
                     <span>Discount</span>
