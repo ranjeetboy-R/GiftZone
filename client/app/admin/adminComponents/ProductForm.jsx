@@ -285,10 +285,7 @@ const ProductForm = ({
 
     return (
         <div className="fixed inset-0 z-50 h-screen overflow-y-auto scrollbar-none bg-black/50 md:p-5">
-            <form
-                onSubmit={saveProduct}
-                className="mx-auto min-h-full w-full max-w-3xl md:rounded-2xl bg-white p-5 shadow-2xl md:p-7"
-            >
+            <form onSubmit={saveProduct}  className="mx-auto min-h-full w-full max-w-3xl md:rounded-2xl bg-white p-5 shadow-2xl md:p-7" >
                 <div className="flex items-center justify-between gap-4">
                     <div>
                         <h2 className="text-2xl font-extrabold">
@@ -598,7 +595,7 @@ const ProductForm = ({
                     </div>
                 </div>
 
-                <div className="mt-7 flex justify-end gap-3">
+                <div className="mt-7 mb-20 flex justify-end gap-3">
                     <button
                         type="button"
                         onClick={closeProductForm}
