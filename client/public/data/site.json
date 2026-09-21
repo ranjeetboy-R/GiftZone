@@ -21,8 +21,8 @@
     "qrImage": "/images/payment/qr-placeholder.jpeg",
     "accountName": "Gift Zone Sell Store",
     "bankName": "Airtel payment bank",
-    "accountNumber": "7079459758",
-    "ifsc": "AIRP0000001",
+    "accountNumber": "",
+    "ifsc": "",
     "upi": "pandeyvisu995-3@okaxis",
     "note": "Please complete the payment and submit your UTR with a clear payment screenshot to confirm your order."
   },
