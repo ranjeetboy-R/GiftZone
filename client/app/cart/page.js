@@ -7,15 +7,15 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 
-const FREE_SHIPPING = 999;
-const SHIPPING_FEE = 79;
+// const FREE_SHIPPING = 999;
+// const SHIPPING_FEE = 0;
 
 export default function CartPage() {
   const { items, updateQuantity, removeFromCart } = useCart();
-  const [coupon, setCoupon] = useState('');
-  const [couponMessage, setCouponMessage] = useState('');
+  // const [coupon, setCoupon] = useState('');
+  // const [couponMessage, setCouponMessage] = useState('');
   const [discount, setDiscount] = useState(0);
-  const [couponLoading, setCouponLoading] = useState(false);
+  // const [couponLoading, setCouponLoading] = useState(false);
 
   const subtotal = useMemo(() => {
     return items.reduce((sum, item) => {
@@ -26,8 +26,8 @@ export default function CartPage() {
     }, 0);
   }, [items]);
 
-  const shipping = subtotal === 0 || subtotal >= FREE_SHIPPING ? 0 : SHIPPING_FEE;
-  const total = Math.max(0, subtotal + shipping - Math.min(discount, subtotal + shipping));
+  // const shipping = subtotal === 0 || subtotal >= FREE_SHIPPING ? 0 : SHIPPING_FEE;
+  const total = Math.max(0, subtotal - Math.min(discount, subtotal));
   const cartCount = items.reduce(
     (sum, item) => sum + Math.max(Number(item.quantity) || 0, 0),
     0
@@ -37,79 +37,79 @@ export default function CartPage() {
     item => Number(item.stock) === 0
   );
 
-  const applyCoupon = async () => {
-    const code = coupon.trim().toUpperCase();
+  // const applyCoupon = async () => {
+  //   const code = coupon.trim().toUpperCase();
 
-    if (!code) {
-      setDiscount(0);
-      setCouponMessage('Please enter a coupon code.');
-      return;
-    }
+  //   if (!code) {
+  //     setDiscount(0);
+  //     setCouponMessage('Please enter a coupon code.');
+  //     return;
+  //   }
 
-    try {
-      setCouponLoading(true);
-      setCouponMessage('');
+  //   try {
+  //     setCouponLoading(true);
+  //     setCouponMessage('');
 
-      const response = await fetch('/data/coupons.json');
+  //     const response = await fetch('/data/coupons.json');
 
-      if (!response.ok) {
-        throw new Error('Failed to load coupons.');
-      }
+  //     if (!response.ok) {
+  //       throw new Error('Failed to load coupons.');
+  //     }
 
-      const coupons = await response.json();
+  //     const coupons = await response.json();
 
-      const found = coupons.find(
-        item => item.code?.toUpperCase() === code && item.active
-      );
+  //     const found = coupons.find(
+  //       item => item.code?.toUpperCase() === code && item.active
+  //     );
 
-      if (!found) {
-        setDiscount(0);
-        setCouponMessage('Invalid or inactive coupon.');
-        return;
-      }
+  //     if (!found) {
+  //       setDiscount(0);
+  //       setCouponMessage('Invalid or inactive coupon.');
+  //       return;
+  //     }
 
-      const minimumOrder = Number(found.minOrder) || 0;
+  //     const minimumOrder = Number(found.minOrder) || 0;
 
-      if (subtotal < minimumOrder) {
-        setDiscount(0);
-        setCouponMessage(
-          `Minimum order value is ₹${minimumOrder.toLocaleString('en-IN')}.`
-        );
-        return;
-      }
+  //     if (subtotal < minimumOrder) {
+  //       setDiscount(0);
+  //       setCouponMessage(
+  //         `Minimum order value is ₹${minimumOrder.toLocaleString('en-IN')}.`
+  //       );
+  //       return;
+  //     }
 
-      let value = 0;
+  //     let value = 0;
 
-      if (found.type === 'percent') {
-        const percentageDiscount = subtotal * Number(found.value || 0) / 100;
-        const maxDiscount = Number(found.maxDiscount) || subtotal;
+  //     if (found.type === 'percent') {
+  //       const percentageDiscount = subtotal * Number(found.value || 0) / 100;
+  //       const maxDiscount = Number(found.maxDiscount) || subtotal;
 
-        value = Math.min(
-          percentageDiscount,
-          maxDiscount
-        );
-      } else {
-        value = Number(found.value) || 0;
-      }
+  //       value = Math.min(
+  //         percentageDiscount,
+  //         maxDiscount
+  //       );
+  //     } else {
+  //       value = Number(found.value) || 0;
+  //     }
 
-      value = Math.min(
-        Math.max(Math.round(value), 0),
-        subtotal + shipping
-      );
+  //     value = Math.min(
+  //       Math.max(Math.round(value), 0),
+  //       subtotal + shipping
+  //     );
 
-      setDiscount(value);
+  //     setDiscount(value);
 
-      setCouponMessage(
-        `${found.code} applied. You saved ₹${value.toLocaleString('en-IN')}.`
-      );
-    } catch (error) {
-      console.error('Failed to apply coupon:', error);
-      setDiscount(0);
-      setCouponMessage('Unable to apply coupon. Please try again.');
-    } finally {
-      setCouponLoading(false);
-    }
-  };
+  //     setCouponMessage(
+  //       `${found.code} applied. You saved ₹${value.toLocaleString('en-IN')}.`
+  //     );
+  //   } catch (error) {
+  //     console.error('Failed to apply coupon:', error);
+  //     setDiscount(0);
+  //     setCouponMessage('Unable to apply coupon. Please try again.');
+  //   } finally {
+  //     setCouponLoading(false);
+  //   }
+  // };
 
   return (
     <>
@@ -174,7 +174,7 @@ export default function CartPage() {
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <Link
-                              href={`/shop/product/${item.slug || item.id || item._id}`}
+                              href={`/product/${item.slug || item.id || item._id}`}
                             >
                               <h3 className="font-bold hover:text-[#c92532]">
                                 {item.name}
@@ -266,12 +266,48 @@ export default function CartPage() {
 
                 <div className="mt-3 flex justify-between text-sm">
                   <span>Shipping</span>
-                  <span>
-                    {shipping
-                      ? `₹${shipping.toLocaleString('en-IN')}`
-                      : 'Free'}
-                  </span>
+                  <span>Free </span>
                 </div>
+
+                {/* <div className="mt-5 rounded-lg bg-slate-50 p-4">
+                  <div className="flex items-center gap-2 text-sm font-bold">
+                    <Tag size={16} />
+                    Coupon Code
+                  </div>
+
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      value={coupon}
+                      onChange={event => {
+                        setCoupon(event.target.value);
+                        setCouponMessage('');
+                      }}
+                      onKeyDown={event => {
+                        if (event.key === 'Enter') {
+                          applyCoupon();
+                        }
+                      }}
+                      placeholder="WELCOME10"
+                      autoComplete="off"
+                      className="min-w-0 flex-1 rounded-md border px-3 py-2.5 text-sm"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={applyCoupon}
+                      disabled={couponLoading}
+                      className="rounded-md bg-slate-900 px-4 py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {couponLoading ? 'Applying...' : 'Apply'}
+                    </button>
+                  </div>
+
+                  {couponMessage && (
+                    <p className="mt-2 text-xs font-semibold text-[#c92532]">
+                      {couponMessage}
+                    </p>
+                  )}
+                </div> */}
 
                 {discount > 0 && (
                   <div className="mt-3 flex justify-between text-sm text-green-600">

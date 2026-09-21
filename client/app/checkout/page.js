@@ -63,12 +63,12 @@ export default function CheckoutPage() {
         return sum + price * quantity;
     }, 0);
 
-    const shipping =
-        subtotal === 0 || subtotal >= FREE_SHIPPING
-            ? 0
-            : SHIPPING_FEE;
+    // const shipping =
+    //     subtotal === 0 || subtotal >= FREE_SHIPPING
+    //         ? 0
+    //         : SHIPPING_FEE;
 
-    const total = subtotal + shipping;
+    const total = subtotal;
 
     const cartCount = items.reduce(
         (sum, item) =>
@@ -782,11 +782,10 @@ export default function CheckoutPage() {
 
                                                 <label
                                                     htmlFor="payment-proof"
-                                                    className={`group relative flex cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed p-5 transition ${
-                                                        proof
+                                                    className={`group relative flex cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed p-5 transition ${proof
                                                             ? 'border-emerald-300 bg-emerald-50/50'
                                                             : 'border-slate-200 bg-slate-50 hover:border-[#c92532]/40 hover:bg-[#fff7f3]'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     <input
                                                         id="payment-proof"
@@ -797,11 +796,10 @@ export default function CheckoutPage() {
                                                     />
 
                                                     <div
-                                                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
-                                                            proof
+                                                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${proof
                                                                 ? 'bg-emerald-100 text-emerald-600'
                                                                 : 'bg-white text-[#c92532] shadow-sm'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         {proof ? (
                                                             <FileImage size={21} />
@@ -847,13 +845,12 @@ export default function CheckoutPage() {
 
                                             {message && (
                                                 <div
-                                                    className={`flex items-start gap-3 rounded-2xl p-4 text-sm font-semibold ${
-                                                        message.includes(
-                                                            'copied successfully'
-                                                        )
+                                                    className={`flex items-start gap-3 rounded-2xl p-4 text-sm font-semibold ${message.includes(
+                                                        'copied successfully'
+                                                    )
                                                             ? 'bg-emerald-50 text-emerald-700'
                                                             : 'bg-red-50 text-[#c92532]'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {message.includes(
                                                         'copied successfully'
@@ -1009,19 +1006,7 @@ export default function CheckoutPage() {
                                             <div className="flex items-center justify-between gap-4 text-slate-500">
                                                 <span>Shipping</span>
 
-                                                <span
-                                                    className={
-                                                        shipping
-                                                            ? 'font-semibold text-slate-900'
-                                                            : 'font-bold text-emerald-600'
-                                                    }
-                                                >
-                                                    {shipping
-                                                        ? `₹${shipping.toLocaleString(
-                                                            'en-IN'
-                                                        )}`
-                                                        : 'Free'}
-                                                </span>
+                                                <span>Free</span>
                                             </div>
                                         </div>
 
@@ -1060,11 +1045,7 @@ export default function CheckoutPage() {
                                                 </p>
 
                                                 <p className="mt-1 text-xs leading-5 text-emerald-700">
-                                                    Orders above ₹
-                                                    {FREE_SHIPPING.toLocaleString(
-                                                        'en-IN'
-                                                    )}{' '}
-                                                    qualify for free delivery.
+                                                    Orders above ₹299 qualify for free delivery.
                                                 </p>
                                             </div>
                                         </div>
