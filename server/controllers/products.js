@@ -12,12 +12,11 @@ export async function listProducts(req, res) {
 
     const skip = (page - 1) * limit;
 
-    const filter =
-      req.query.all === 'true'
-        ? {}
-        : {
-          active: true
-        };
+    const filter = req.query.all === 'true'
+      ? {}
+      : {
+        active: true
+      };
 
     if (req.query.category) {
       filter.category = req.query.category;
@@ -85,7 +84,7 @@ export async function listProducts(req, res) {
     const [products, total] = await Promise.all([
       Product.find(filter)
         .select(
-          'name slug price description compareAtPrice images category rating reviews stock isFeatured isNewArrival active'
+          'name slug price sizes description compareAtPrice images category rating reviews stock isFeatured isNewArrival active'
         )
         .sort(sort)
         .skip(skip)
@@ -215,9 +214,15 @@ export async function createProduct(req, res) {
     payload.reviews = Number(payload.reviews || 0);
 
     if (payload.compareAtPrice !== undefined) {
-      payload.compareAtPrice = Number(
-        payload.compareAtPrice
-      );
+      payload.compareAtPrice = Number(payload.compareAtPrice);
+    }
+
+    if (payload.sizes !== undefined) {
+      payload.sizes = Array.isArray(payload.sizes)
+        ? payload.sizes
+          .map((size) => String(size).trim())
+          .filter(Boolean)
+        : [];
     }
 
     const product = await Product.create(payload);
@@ -263,9 +268,15 @@ export async function updateProduct(req, res) {
     }
 
     if (payload.compareAtPrice !== undefined) {
-      payload.compareAtPrice = Number(
-        payload.compareAtPrice
-      );
+      payload.compareAtPrice = Number(payload.compareAtPrice);
+    }
+
+    if (payload.sizes !== undefined) {
+      payload.sizes = Array.isArray(payload.sizes)
+        ? payload.sizes
+          .map((size) => String(size).trim())
+          .filter(Boolean)
+        : [];
     }
 
     const product = await Product.findByIdAndUpdate(
@@ -358,7 +369,16 @@ function formatCategoryName(slug) {
 
 export async function getCategories(req, res) {
   try {
-    const categories = await Product.aggregate([
+    const hasLimit = req.query.limit !== undefined;
+
+    const limit = hasLimit
+      ? Math.min(
+        Math.max(Number(req.query.limit) || 1, 1),
+        100
+      )
+      : null;
+
+    const pipeline = [
       {
         $match: {
           active: true,
@@ -381,10 +401,18 @@ export async function getCategories(req, res) {
           _id: 1
         }
       }
-    ]);
+    ];
+
+    if (limit !== null) {
+      pipeline.push({
+        $limit: limit
+      });
+    }
+
+    const categories = await Product.aggregate(pipeline);
 
     res.json({
-      categories: categories?.map(item => ({
+      categories: categories.map(item => ({
         slug: item._id,
         name: formatCategoryName(item._id),
         count: item.count

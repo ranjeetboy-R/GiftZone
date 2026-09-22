@@ -40,9 +40,7 @@ export default function ProductCard({ product }) {
 
     const handleBuyNow = () => {
         if (isOutOfStock) return;
-
-        addToCart(product);
-        router.push('/checkout');
+        router.push(`/product/${slug}`);
     };
 
     return (

@@ -2,7 +2,6 @@
 
 import { apiFetch } from "@/lib/api";
 import { Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import ProductForm from "../adminComponents/ProductForm";
@@ -72,11 +71,14 @@ const page = () => {
             isFeatured: Boolean(product.isFeatured),
             isNewArrival: Boolean(product.isNewArrival),
             active: product.active !== false,
-            images: product.images || []
+            images: product.images || [],
+            sizes: product.sizes || []
         });
 
         setShowProductForm(true);
     };
+
+    
 
     const deleteProduct = async (product) => {
         const confirmed = window.confirm(
@@ -206,11 +208,11 @@ const page = () => {
 
                                             <div>
                                                 <p className="font-bold">
-                                                    {product.name}
+                                                    {product.name?.slice(0, 30)}...
                                                 </p>
 
                                                 <p className="text-xs text-slate-400">
-                                                    {product.slug}
+                                                    {product.slug?.slice(0, 30)}...
                                                 </p>
                                             </div>
                                         </div>
