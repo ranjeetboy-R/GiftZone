@@ -13,7 +13,9 @@ const commissioner = Commissioner({
 const storyScript = Story_Script({
   variable: "--font-script",
   subsets: ["latin"],
-  weight: "400"
+  weight: "400",
+  display: 'swap',
+  adjustFontFallback: false
 });
 
 export const metadata = {

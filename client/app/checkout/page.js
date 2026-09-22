@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import {
     ArrowLeft,
@@ -31,22 +31,27 @@ import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { apiFetch } from '@/lib/api';
 import { payment } from '@/public/data/site.json';
+import toast from 'react-hot-toast';
 
 const FREE_SHIPPING = 999;
 const SHIPPING_FEE = 79;
 const MAX_PROOF_SIZE = 5 * 1024 * 1024;
 
 export default function CheckoutPage() {
-    const { items, clearCart, removeFromCart } = useCart();
+    const { items, clearCart, removeFromCart, getBuyNowItem, clearBuyNow, cartCount: checkCartCount } = useCart();
     const { isSignedIn, getToken } = useAuth();
     const { user } = useUser();
     const router = useRouter();
-
     const [proof, setProof] = useState(null);
     const [utr, setUtr] = useState('');
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [paymentLoading, setPaymentLoading] = useState(false);
+    const [buyNowItem, setBuyNowItem] = useState(null);
+    const [buyNowChecked, setBuyNowChecked] = useState(false);
+
+    const searchParams = useSearchParams();
+    const cart = searchParams.get('cart');
 
     const [form, setForm] = useState({
         name: '',
@@ -58,7 +63,29 @@ export default function CheckoutPage() {
         pincode: ''
     });
 
-    const subtotal = items.reduce((sum, item) => {
+    useEffect(()=> {
+        if (cart) {
+            clearBuyNow();
+        }
+    }, [cart])
+
+    useEffect(() => {
+        try {
+            const item = getBuyNowItem?.();
+
+            if (item) {
+                setBuyNowItem(item);
+            }
+        } catch (error) {
+            console.error('Buy Now item error:', error);
+        } finally {
+            setBuyNowChecked(true);
+        }
+    }, []);
+
+    const checkoutItem = buyNowItem ? [buyNowItem] : items;
+
+    const subtotal = checkoutItem.reduce((sum, item) => {
         const price = Number(item.price) || 0;
         const quantity = Math.max(Number(item.quantity) || 0, 0);
 
@@ -72,7 +99,7 @@ export default function CheckoutPage() {
 
     const total = subtotal;
 
-    const cartCount = items.reduce(
+    const cartCount = checkoutItem.reduce(
         (sum, item) =>
             sum + Math.max(Number(item.quantity) || 0, 0),
         0
@@ -197,7 +224,7 @@ export default function CheckoutPage() {
             return 'Please login before checkout.';
         }
 
-        if (!items.length) {
+        if (!checkoutItem.length) {
             return 'Your cart is empty.';
         }
 
@@ -257,6 +284,10 @@ export default function CheckoutPage() {
 
     const placeOrder = async () => {
         setMessage('');
+        if (subtotal < 299) {
+            toast.error("Minimum Order Value: ₹299 Sorry, orders below ₹299 cannot be placed. Please add items worth ₹299 or more to continue with your order.")
+            return;
+        }
 
         const validationError = validateForm();
 
@@ -294,7 +325,7 @@ export default function CheckoutPage() {
                     pincode: form.pincode.trim()
                 },
 
-                items: items.map(item => ({
+                items: checkoutItem.map(item => ({
                     productId: item.id || item._id,
                     slug: item.slug,
                     name: item.name,
@@ -355,8 +386,7 @@ export default function CheckoutPage() {
         }
     };
 
-    const inputClass =
-        'h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#c92532] focus:ring-4 focus:ring-[#c92532]/10';
+    const inputClass = 'h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#c92532] focus:ring-4 focus:ring-[#c92532]/10';
 
     const detailRows = [
         {
@@ -376,7 +406,7 @@ export default function CheckoutPage() {
 
     return (
         <>
-            <Header cartCount={cartCount} />
+            <Header cartCount={checkCartCount} />
 
             <main className="min-h-screen bg-[#fafafa]">
                 <div className="border-b border-slate-200 bg-white">
@@ -456,7 +486,7 @@ export default function CheckoutPage() {
                         </div>
                     )}
 
-                    {!items.length ? (
+                    {!buyNowChecked ? (
                         <div className="mx-auto max-w-lg py-24 text-center">
                             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#c92532]/10 text-[#c92532]">
                                 <ShoppingBag size={32} />
@@ -967,29 +997,18 @@ export default function CheckoutPage() {
 
                                     <div className="p-6">
                                         <div className="max-h-85 space-y-4 overflow-y-auto pr-1">
-                                            {items.map(item => {
-                                                const itemId =
-                                                    item.id ||
-                                                    item._id ||
-                                                    item.slug;
-
-                                                const price =
-                                                    Number(item.price) || 0;
-
-                                                const quantity =
-                                                    Number(item.quantity) || 0;
-
-                                                const image =
-                                                    item.images?.[0] ||
-                                                    item.image ||
-                                                    '';
+                                            {checkoutItem.map(item => {
+                                                const itemId = item.id || item._id || item.slug;
+                                                const price = Number(item.price) || 0;
+                                                const quantity = Number(item.quantity) || 0;
+                                                const image = item.images?.[0] || item.image || '';
 
                                                 return (
                                                     <div
                                                         key={itemId}
                                                         className="flex gap-3"
                                                     >
-                                                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
+                                                        <div className="h-16 aspect-square shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
                                                             {image ? (
                                                                 <img
                                                                     src={image}
@@ -1026,14 +1045,17 @@ export default function CheckoutPage() {
                                                                 )}
                                                             </p>
 
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => removeFromCart(itemId)}
-                                                                aria-label={`Remove ${item.name || 'product'} from cart`}
-                                                                className="text-slate-400 hover:text-red-600 p-2"
-                                                            >
-                                                                <Trash2 size={18} />
-                                                            </button>
+                                                            {
+                                                                cartCount > 1 &&
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => removeFromCart(itemId)}
+                                                                    aria-label={`Remove ${item.name || 'product'} from cart`}
+                                                                    className="text-slate-400 hover:text-red-600 p-2"
+                                                                >
+                                                                    <Trash2 size={18} />
+                                                                </button>
+                                                            }
                                                         </div>
                                                     </div>
                                                 );

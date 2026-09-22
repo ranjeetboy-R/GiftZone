@@ -23,16 +23,8 @@ import { apiFetch } from '@/lib/api';
 import Image from 'next/image';
 import ProductSkeleton from './ProductSkeleton';
 
-const sizes = [
-    { title: 's' },
-    { title: 'm' },
-    { title: 'l' },
-    { title: 'xl' },
-    { title: 'xxl' },
-]
-
 export default function ProductPage({ params }) {
-    const { items, addToCart } = useCart();
+    const { items, addToCart, buyNow } = useCart();
     const { toggleWishlist, isWishlisted } = useWishlist();
     const { slug: routeSlug } = useParams();
 
@@ -189,9 +181,11 @@ export default function ProductPage({ params }) {
     };
 
     const handleBuyNow = () => {
-        if (cartCount === 0) {
-            handleAddToCart();
-        }
+        buyNow(
+            product,
+            quantity,
+            selectedSize
+        );
         router.push('/checkout');
     };
 
@@ -321,47 +315,24 @@ export default function ProductPage({ params }) {
 
                                 {/* Sizes  */}
                                 {
-                                    (
-                                        product.category === 'fashion-men' ||
-                                        product.category === 'fashion-women' ||
-                                        product.category === 'fashion-kids'
-                                    ) &&
-
-                                    ![
-                                        'saree',
-                                        'dupatta',
-                                        'shawl',
-                                        'muffler',
-                                        'tie',
-                                        'dhoti',
-                                        'lungi',
-                                        'gamcha',
-                                        'chunni',
-                                        'cape',
-                                    ].some(keyword =>
-                                        `${product.name || ''}`
-                                            .toLowerCase()
-                                            .includes(keyword)
-                                    ) &&
-
-                                    sizes?.length > 0 && (
-                                        <div className="mt-5 flex items-center gap-3">
-                                            {sizes.map((size) => (
+                                    product.sizes?.length > 0 && (
+                                        <div className="mt-5 flex flex-wrap items-center gap-3">
+                                            {product.sizes.map((size, index) => (
                                                 <button
                                                     type="button"
-                                                    onClick={() => setSelectedSize(size.title)}
-                                                    key={size.title}
+                                                    onClick={() => setSelectedSize(size)}
+                                                    key={index}
                                                     className={`
-                                                            w-10 h-10 text-sm flex items-center justify-center
+                                                            w-fit py-2 px-2 min-w-10 text-sm
                                                             uppercase font-semibold border border-slate-400 rounded-md
                                                             transition-all duration-200
-                                                            ${size.title === selectedSize
+                                                            ${size === selectedSize
                                                             ? 'bg-stone-800 text-white border-stone-800'
                                                             : 'hover:bg-stone-100 hover:border-stone-800'
                                                         }
                                                         `}
                                                 >
-                                                    {size.title}
+                                                    {size}
                                                 </button>
                                             ))}
                                         </div>

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Trash2, Minus, Plus, Tag, ArrowRight } from 'lucide-react';
+import { Trash2, Minus, Plus, ArrowRight } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
@@ -338,7 +338,7 @@ export default function CartPage() {
                 )}
 
                 <Link
-                  href={hasOutOfStockItem ? '#' : '/checkout'}
+                  href={hasOutOfStockItem ? '#' : `/checkout?cart=${cartCount}`}
                   onClick={event => {
                     if (hasOutOfStockItem) {
                       event.preventDefault();

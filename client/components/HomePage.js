@@ -57,7 +57,7 @@ export default function HomePage() {
 
         const [productData, categoryData] = await Promise.all([
           apiFetch('/api/products?limit=50'),
-          apiFetch('/api/products/categories')
+          apiFetch('/api/products/categories?limit=8')
         ]);
 
         if (cancelled) {
@@ -138,7 +138,7 @@ export default function HomePage() {
               <div className="flex mt-5 items-center gap-5">
                 <Link
                   href="/shop"
-                  className="flex items-center gap-2 px-5 py-3 rounded-xl bg-rose-600 text-white hover:bg-rose-500 transition-all w-fit text-sm font-semibold"
+                  className="flex items-center gap-2 md:px-5 px-3 py-3 whitespace-nowrap rounded-xl bg-rose-600 text-white hover:bg-rose-500 transition-all w-fit text-sm font-semibold"
                 >
                   {hero.primaryCta}
                   <MoveRight size={18} />
@@ -146,7 +146,7 @@ export default function HomePage() {
 
                 <Link
                   href="/categories"
-                  className="flex items-center gap-2 px-5 py-3 rounded-xl border border-slate-300 hover:bg-zinc-100 transition-all w-fit text-sm font-semibold"
+                  className="flex items-center gap-2 md:px-5 px-3 py-3 whitespace-nowrap rounded-xl border border-slate-300 hover:bg-zinc-100 transition-all w-fit text-sm font-semibold"
                 >
                   {hero.secondaryCta}
                 </Link>

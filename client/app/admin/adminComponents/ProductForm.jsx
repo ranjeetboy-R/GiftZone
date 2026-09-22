@@ -19,10 +19,78 @@ const emptyProduct = {
     isFeatured: false,
     isNewArrival: false,
     active: true,
-    images: []
+    images: [],
+    sizes: []
 };
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+const SIZE_GROUPS = [
+    {
+        title: "Clothing",
+        options: [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "XXL",
+            "3XL",
+            "4XL",
+            "5XL"
+        ]
+    },
+    {
+        title: "Numeric / Waist",
+        options: [
+            "28",
+            "30",
+            "32",
+            "34",
+            "36",
+            "38",
+            "40",
+            "42",
+            "44",
+            "46",
+            "48"
+        ]
+    },
+    {
+        title: "Kids",
+        options: [
+            "0-3M",
+            "3-6M",
+            "6-12M",
+            "1-2Y",
+            "2-3Y",
+            "3-4Y",
+            "5-6Y",
+            "7-8Y",
+            "9-10Y",
+            "11-12Y"
+        ]
+    },
+    {
+        title: "Shoes",
+        options: [
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12"
+        ]
+    },
+    {
+        title: "Other",
+        options: [
+            "Free Size"
+        ]
+    }
+];
 
 const ProductForm = ({
     setShowProductForm,
@@ -130,14 +198,24 @@ const ProductForm = ({
 
             setProductForm((current) => ({
                 ...current,
-                images: [...current.images, ...uploadedImages]
+                images: [
+                    ...current.images,
+                    ...uploadedImages
+                ]
             }));
 
-            showSuccess("Product images uploaded successfully.");
+            showSuccess(
+                "Product images uploaded successfully."
+            );
         } catch (error) {
-            console.error("Failed to upload images:", error);
+            console.error(
+                "Failed to upload images:",
+                error
+            );
+
             showError(
-                error.message || "Failed to upload product images."
+                error.message ||
+                "Failed to upload product images."
             );
         } finally {
             setUploadLoading(false);
@@ -154,16 +232,56 @@ const ProductForm = ({
         }));
     };
 
+    const toggleSize = (size) => {
+        setProductForm((current) => {
+            const currentSizes = Array.isArray(
+                current.sizes
+            )
+                ? current.sizes
+                : [];
+
+            return {
+                ...current,
+                sizes: currentSizes.includes(size)
+                    ? currentSizes.filter(
+                        (item) => item !== size
+                    )
+                    : [
+                        ...currentSizes,
+                        size
+                    ]
+            };
+        });
+    };
+
+    const clearSizes = () => {
+        setProductForm((current) => ({
+            ...current,
+            sizes: []
+        }));
+    };
+
     const validateProduct = () => {
         const name = productForm.name.trim();
         const slug = productForm.slug.trim();
         const price = Number(productForm.price);
-        const compareAtPrice = productForm.compareAtPrice
-            ? Number(productForm.compareAtPrice)
-            : 0;
-        const stock = Number(productForm.stock || 0);
-        const rating = Number(productForm.rating || 0);
-        const reviews = Number(productForm.reviews || 0);
+
+        const compareAtPrice =
+            productForm.compareAtPrice
+                ? Number(productForm.compareAtPrice)
+                : 0;
+
+        const stock = Number(
+            productForm.stock || 0
+        );
+
+        const rating = Number(
+            productForm.rating || 0
+        );
+
+        const reviews = Number(
+            productForm.reviews || 0
+        );
 
         if (!name) {
             return "Product name is required.";
@@ -173,34 +291,59 @@ const ProductForm = ({
             return "Product slug is required.";
         }
 
-        if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-            return "Product slug can only contain lowercase letters, numbers and hyphens.";
+        if (
+            !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(
+                slug
+            )
+        ) {
+            return (
+                "Product slug can only contain " +
+                "lowercase letters, numbers and hyphens."
+            );
         }
 
         if (!productForm.category) {
             return "Product category is required.";
         }
 
-        if (!Number.isFinite(price) || price < 0) {
-            return "Product price cannot be negative.";
+        if (
+            !Number.isFinite(price) ||
+            price < 0
+        ) {
+            return (
+                "Product price cannot be negative."
+            );
         }
 
         if (
             productForm.compareAtPrice &&
-            (!Number.isFinite(compareAtPrice) || compareAtPrice < 0)
+            (
+                !Number.isFinite(compareAtPrice) ||
+                compareAtPrice < 0
+            )
         ) {
-            return "Compare at price cannot be negative.";
+            return (
+                "Compare at price cannot be negative."
+            );
         }
 
         if (
             productForm.compareAtPrice &&
             compareAtPrice < price
         ) {
-            return "Compare at price should be greater than or equal to the selling price.";
+            return (
+                "Compare at price should be greater " +
+                "than or equal to the selling price."
+            );
         }
 
-        if (!Number.isInteger(stock) || stock < 0) {
-            return "Stock must be a valid non-negative number.";
+        if (
+            !Number.isInteger(stock) ||
+            stock < 0
+        ) {
+            return (
+                "Stock must be a valid non-negative number."
+            );
         }
 
         if (
@@ -208,15 +351,23 @@ const ProductForm = ({
             rating < 0 ||
             rating > 5
         ) {
-            return "Rating must be between 0 and 5.";
+            return (
+                "Rating must be between 0 and 5."
+            );
         }
 
-        if (!Number.isInteger(reviews) || reviews < 0) {
-            return "Reviews count must be a valid non-negative number.";
+        if (
+            !Number.isInteger(reviews) ||
+            reviews < 0
+        ) {
+            return (
+                "Reviews count must be a valid " +
+                "non-negative number."
+            );
         }
 
         return null;
-    };
+    };    
 
     const saveProduct = async (event) => {
         event.preventDefault();
@@ -225,28 +376,73 @@ const ProductForm = ({
             setLoading(true);
             showError("");
 
-            const validationError = validateProduct();
+            const validationError =
+                validateProduct();
 
             if (validationError) {
-                throw new Error(validationError);
+                throw new Error(
+                    validationError
+                );
             }
 
             const payload = {
                 name: productForm.name.trim(),
+
                 slug: productForm.slug.trim(),
-                description: productForm.description.trim(),
-                price: Number(productForm.price),
-                compareAtPrice: productForm.compareAtPrice
-                    ? Number(productForm.compareAtPrice)
-                    : undefined,
-                category: productForm.category,
-                images: productForm.images,
-                stock: Number(productForm.stock || 0),
-                rating: Number(productForm.rating || 0),
-                reviews: Number(productForm.reviews || 0),
-                isFeatured: Boolean(productForm.isFeatured),
-                isNewArrival: Boolean(productForm.isNewArrival),
-                active: Boolean(productForm.active)
+
+                description:
+                    productForm.description.trim(),
+
+                price: Number(
+                    productForm.price
+                ),
+
+                compareAtPrice:
+                    productForm.compareAtPrice
+                        ? Number(
+                            productForm.compareAtPrice
+                        )
+                        : undefined,
+
+                category:
+                    productForm.category,
+
+                images:
+                    productForm.images,
+
+                sizes:
+                    Array.isArray(
+                        productForm.sizes
+                    )
+                        ? productForm.sizes
+                        : [],
+
+                stock: Number(
+                    productForm.stock || 0
+                ),
+
+                rating: Number(
+                    productForm.rating || 0
+                ),
+
+                reviews: Number(
+                    productForm.reviews || 0
+                ),
+
+                isFeatured:
+                    Boolean(
+                        productForm.isFeatured
+                    ),
+
+                isNewArrival:
+                    Boolean(
+                        productForm.isNewArrival
+                    ),
+
+                active:
+                    Boolean(
+                        productForm.active
+                    )
             };
 
             if (editingProduct) {
@@ -254,18 +450,30 @@ const ProductForm = ({
                     `/api/products/${editingProduct._id}`,
                     {
                         method: "PATCH",
-                        body: JSON.stringify(payload),
+                        body: JSON.stringify(
+                            payload
+                        ),
                     }
                 );
 
-                showSuccess("Product updated successfully.");
-            } else {
-                await apiFetch("/api/products", {
-                    method: "POST",
-                    body: JSON.stringify(payload),
-                });
 
-                showSuccess("Product added successfully.");
+                showSuccess(
+                    "Product updated successfully."
+                );
+            } else {
+                await apiFetch(
+                    "/api/products",
+                    {
+                        method: "POST",
+                        body: JSON.stringify(
+                            payload
+                        ),
+                    }
+                );
+
+                showSuccess(
+                    "Product added successfully."
+                );
             }
 
             await loadProducts();
@@ -274,9 +482,14 @@ const ProductForm = ({
             setEditingProduct(null);
             setProductForm(emptyProduct);
         } catch (error) {
-            console.error("Failed to save product:", error);
+            console.error(
+                "Failed to save product:",
+                error
+            );
+
             showError(
-                error.message || "Failed to save product."
+                error.message ||
+                "Failed to save product."
             );
         } finally {
             setLoading(false);
@@ -285,7 +498,10 @@ const ProductForm = ({
 
     return (
         <div className="fixed inset-0 z-50 h-screen overflow-y-auto scrollbar-none bg-black/50 md:p-5">
-            <form onSubmit={saveProduct}  className="mx-auto min-h-full w-full max-w-3xl md:rounded-2xl bg-white p-5 shadow-2xl md:p-7" >
+            <form
+                onSubmit={saveProduct}
+                className="mx-auto min-h-full w-full max-w-3xl bg-white p-5 shadow-2xl md:rounded-2xl md:p-7"
+            >
                 <div className="flex items-center justify-between gap-4">
                     <div>
                         <h2 className="text-2xl font-extrabold">
@@ -295,14 +511,18 @@ const ProductForm = ({
                         </h2>
 
                         <p className="mt-1 text-sm text-slate-500">
-                            Manage product details and images.
+                            Manage product details,
+                            sizes and images.
                         </p>
                     </div>
 
                     <button
                         type="button"
                         onClick={closeProductForm}
-                        disabled={loading || uploadLoading}
+                        disabled={
+                            loading ||
+                            uploadLoading
+                        }
                         className="rounded-full border p-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <X size={18} />
@@ -317,10 +537,16 @@ const ProductForm = ({
 
                         <input
                             name="name"
-                            value={productForm.name}
-                            onChange={handleProductChange}
+                            value={
+                                productForm.name
+                            }
+                            onChange={
+                                handleProductChange
+                            }
                             onBlur={() => {
-                                if (!productForm.slug) {
+                                if (
+                                    !productForm.slug
+                                ) {
                                     generateSlug();
                                 }
                             }}
@@ -338,8 +564,12 @@ const ProductForm = ({
                         <div className="flex gap-2">
                             <input
                                 name="slug"
-                                value={productForm.slug}
-                                onChange={handleProductChange}
+                                value={
+                                    productForm.slug
+                                }
+                                onChange={
+                                    handleProductChange
+                                }
                                 className="w-full rounded-md border px-4 py-3 outline-none focus:border-[#c92532]"
                                 placeholder="premium-gift-hamper"
                                 required
@@ -347,7 +577,9 @@ const ProductForm = ({
 
                             <button
                                 type="button"
-                                onClick={generateSlug}
+                                onClick={
+                                    generateSlug
+                                }
                                 className="rounded-md border px-3 text-xs font-bold text-slate-600 hover:bg-slate-50"
                             >
                                 Generate
@@ -362,8 +594,12 @@ const ProductForm = ({
 
                         <select
                             name="category"
-                            value={productForm.category}
-                            onChange={handleProductChange}
+                            value={
+                                productForm.category
+                            }
+                            onChange={
+                                handleProductChange
+                            }
                             className="w-full rounded-md border px-4 py-3 outline-none focus:border-[#c92532]"
                             required
                         >
@@ -371,14 +607,23 @@ const ProductForm = ({
                                 Select category
                             </option>
 
-                            {categories?.map((category) => (
-                                <option
-                                    key={category.slug || category.name}
-                                    value={category.slug}
-                                >
-                                    {category.name}
-                                </option>
-                            ))}
+                            {categories?.map(
+                                (category) => (
+                                    <option
+                                        key={
+                                            category.slug ||
+                                            category.name
+                                        }
+                                        value={
+                                            category.slug
+                                        }
+                                    >
+                                        {
+                                            category.name
+                                        }
+                                    </option>
+                                )
+                            )}
                         </select>
                     </div>
 
@@ -389,8 +634,12 @@ const ProductForm = ({
 
                         <input
                             name="price"
-                            value={productForm.price}
-                            onChange={handleProductChange}
+                            value={
+                                productForm.price
+                            }
+                            onChange={
+                                handleProductChange
+                            }
                             type="number"
                             min="0"
                             step="0.01"
@@ -407,8 +656,12 @@ const ProductForm = ({
 
                         <input
                             name="compareAtPrice"
-                            value={productForm.compareAtPrice}
-                            onChange={handleProductChange}
+                            value={
+                                productForm.compareAtPrice
+                            }
+                            onChange={
+                                handleProductChange
+                            }
                             type="number"
                             min="0"
                             step="0.01"
@@ -424,8 +677,12 @@ const ProductForm = ({
 
                         <input
                             name="stock"
-                            value={productForm.stock}
-                            onChange={handleProductChange}
+                            value={
+                                productForm.stock
+                            }
+                            onChange={
+                                handleProductChange
+                            }
                             type="number"
                             min="0"
                             step="1"
@@ -441,8 +698,12 @@ const ProductForm = ({
 
                         <input
                             name="rating"
-                            value={productForm.rating}
-                            onChange={handleProductChange}
+                            value={
+                                productForm.rating
+                            }
+                            onChange={
+                                handleProductChange
+                            }
                             type="number"
                             min="0"
                             max="5"
@@ -459,8 +720,12 @@ const ProductForm = ({
 
                         <input
                             name="reviews"
-                            value={productForm.reviews}
-                            onChange={handleProductChange}
+                            value={
+                                productForm.reviews
+                            }
+                            onChange={
+                                handleProductChange
+                            }
                             type="number"
                             min="0"
                             step="1"
@@ -476,8 +741,12 @@ const ProductForm = ({
 
                         <textarea
                             name="description"
-                            value={productForm.description}
-                            onChange={handleProductChange}
+                            value={
+                                productForm.description
+                            }
+                            onChange={
+                                handleProductChange
+                            }
                             rows={5}
                             className="w-full rounded-md border px-4 py-3 outline-none focus:border-[#c92532]"
                             placeholder="Write product description..."
@@ -496,12 +765,17 @@ const ProductForm = ({
                                         size={18}
                                         className="animate-spin"
                                     />
+
                                     Uploading...
                                 </>
                             ) : (
                                 <>
-                                    <Upload size={18} />
-                                    Upload Product Images
+                                    <Upload
+                                        size={18}
+                                    />
+
+                                    Upload Product
+                                    Images
                                 </>
                             )}
 
@@ -509,8 +783,13 @@ const ProductForm = ({
                                 type="file"
                                 accept="image/*"
                                 multiple
-                                onChange={uploadImages}
-                                disabled={uploadLoading || loading}
+                                onChange={
+                                    uploadImages
+                                }
+                                disabled={
+                                    uploadLoading ||
+                                    loading
+                                }
                                 className="hidden"
                             />
                         </label>
@@ -519,38 +798,146 @@ const ProductForm = ({
                             Maximum 5MB per image.
                         </p>
 
-                        {productForm.images.length > 0 && (
-                            <div className="mt-4 grid grid-cols-3 gap-3 md:grid-cols-5">
-                                {productForm.images.map(
-                                    (image, index) => (
-                                        <div
-                                            key={`${image}-${index}`}
-                                            className="relative aspect-square overflow-hidden rounded-lg border"
-                                        >
-                                            <img
-                                                src={image}
-                                                alt={`Product ${index + 1}`}
-                                                className="h-full w-full object-cover"
-                                            />
-
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    removeImage(index)
-                                                }
-                                                disabled={
-                                                    loading ||
-                                                    uploadLoading
-                                                }
-                                                className="absolute right-1 top-1 rounded-full bg-white p-1 text-red-500 shadow disabled:opacity-50"
+                        {productForm.images
+                            .length > 0 && (
+                                <div className="mt-4 grid grid-cols-3 gap-3 md:grid-cols-5">
+                                    {productForm.images.map(
+                                        (
+                                            image,
+                                            index
+                                        ) => (
+                                            <div
+                                                key={`${image}-${index}`}
+                                                className="relative aspect-square overflow-hidden rounded-lg border"
                                             >
-                                                <X size={14} />
-                                            </button>
-                                        </div>
-                                    )
-                                )}
+                                                <img
+                                                    src={image}
+                                                    alt={`Product ${index +
+                                                        1
+                                                        }`}
+                                                    className="h-full w-full object-cover"
+                                                />
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        removeImage(
+                                                            index
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        loading ||
+                                                        uploadLoading
+                                                    }
+                                                    className="absolute right-1 top-1 rounded-full bg-white p-1 text-red-500 shadow disabled:opacity-50"
+                                                >
+                                                    <X
+                                                        size={
+                                                            14
+                                                        }
+                                                    />
+                                                </button>
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                            )}
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <label className="block text-sm font-bold">
+                                    Available Sizes
+                                </label>
+
+                                <p className="mt-1 text-xs text-slate-400">
+                                    Select all sizes available for this product.
+                                </p>
                             </div>
-                        )}
+
+                            {productForm.sizes?.length >
+                                0 && (
+                                    <button
+                                        type="button"
+                                        onClick={
+                                            clearSizes
+                                        }
+                                        disabled={
+                                            loading ||
+                                            uploadLoading
+                                        }
+                                        className="text-xs border px-3 py-1 border-rose-300 rounded-md bg-rose-50 font-bold text-red-500 hover:text-red-600 disabled:opacity-50"
+                                    >
+                                        Clear All
+                                    </button>
+                                )}
+                        </div>
+
+                        <div className="mt-4 space-y-4 rounded-lg border bg-slate-50 p-4">
+                            {SIZE_GROUPS.map(
+                                (group) => (
+                                    <div
+                                        key={
+                                            group.title
+                                        }
+                                    >
+                                        <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                                            {
+                                                group.title
+                                            }
+                                        </p>
+
+                                        <div className="flex flex-wrap gap-2">
+                                            {group.options.map((size) => {
+                                                const selected = (
+                                                    productForm.sizes ||
+                                                    []
+                                                ).includes(
+                                                    size
+                                                );
+
+                                                return (
+                                                    <button
+                                                        key={`${group.title}-${size}`}
+                                                        type="button"
+                                                        onClick={() =>
+                                                            toggleSize(
+                                                                size
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            loading ||
+                                                            uploadLoading
+                                                        }
+                                                        className={`rounded-md border px-4 py-2 text-sm font-bold transition 
+                                                            ${(selected || productForm?.sizes?.includes(size))
+                                                            ? "border-[#c92532] bg-[#c92532] text-white"
+                                                            : "border-slate-300 bg-white text-slate-700 hover:border-[#c92532] hover:text-[#c92532]"
+                                                            } disabled:cursor-not-allowed disabled:opacity-50`}
+                                                    >
+                                                        {
+                                                            size
+                                                        }
+                                                    </button>
+                                                );
+                                            }
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            )}
+                        </div>
+
+                        <p className="mt-3 text-xs text-slate-500">
+                            Selected:{" "}
+                            {productForm.sizes
+                                ?.length
+                                ? productForm.sizes.join(
+                                    ", "
+                                )
+                                : "None"}
+                        </p>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-3 md:col-span-2">
@@ -558,8 +945,12 @@ const ProductForm = ({
                             <input
                                 type="checkbox"
                                 name="isFeatured"
-                                checked={productForm.isFeatured}
-                                onChange={handleProductChange}
+                                checked={
+                                    productForm.isFeatured
+                                }
+                                onChange={
+                                    handleProductChange
+                                }
                             />
 
                             <span className="text-sm font-bold">
@@ -571,8 +962,12 @@ const ProductForm = ({
                             <input
                                 type="checkbox"
                                 name="isNewArrival"
-                                checked={productForm.isNewArrival}
-                                onChange={handleProductChange}
+                                checked={
+                                    productForm.isNewArrival
+                                }
+                                onChange={
+                                    handleProductChange
+                                }
                             />
 
                             <span className="text-sm font-bold">
@@ -584,8 +979,12 @@ const ProductForm = ({
                             <input
                                 type="checkbox"
                                 name="active"
-                                checked={productForm.active}
-                                onChange={handleProductChange}
+                                checked={
+                                    productForm.active
+                                }
+                                onChange={
+                                    handleProductChange
+                                }
                             />
 
                             <span className="text-sm font-bold">
@@ -598,8 +997,13 @@ const ProductForm = ({
                 <div className="mt-7 mb-20 flex justify-end gap-3">
                     <button
                         type="button"
-                        onClick={closeProductForm}
-                        disabled={loading || uploadLoading}
+                        onClick={
+                            closeProductForm
+                        }
+                        disabled={
+                            loading ||
+                            uploadLoading
+                        }
                         className="rounded-md border px-5 py-3 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         Cancel
@@ -607,7 +1011,10 @@ const ProductForm = ({
 
                     <button
                         type="submit"
-                        disabled={loading || uploadLoading}
+                        disabled={
+                            loading ||
+                            uploadLoading
+                        }
                         className="flex items-center gap-2 rounded-md bg-[#c92532] px-6 py-3 text-sm font-bold text-white disabled:opacity-60"
                     >
                         {loading && (

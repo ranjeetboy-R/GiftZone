@@ -12,7 +12,7 @@ import { useCart } from '@/context/CartContext';
 import { apiFetch } from '@/lib/api';
 import { Search, X } from 'lucide-react';
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 20;
 
 const SORT_OPTIONS = [
   {

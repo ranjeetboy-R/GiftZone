@@ -97,7 +97,6 @@ export default function Header({
             <Link className='border px-3 py-2 rounded-lg border-slate-200 hover:bg-slate-50' href="/wishlist">Wishlist</Link>
             <Link className='border px-3 py-2 rounded-lg border-slate-200 hover:bg-slate-50' href="/orders">My Orders</Link>
             <Link className='border px-3 py-2 rounded-lg border-slate-200 hover:bg-slate-50' href="/about">About</Link>
-            <Link className='border px-3 py-2 rounded-lg border-slate-200 hover:bg-slate-50' href="/orders">My Orders</Link>
           </div>
         </div>
       </div>
