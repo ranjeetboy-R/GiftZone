@@ -7,7 +7,7 @@ export default function SectionHeading({
   link,
   href = '/shop'
 }) {
-  return <div className="container-width mb-8 flex items-end justify-between gap-4">
+  return <div className="container-width mb-5 flex items-end justify-between gap-4">
   <div>
                 {eyebrow && <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[#c92532]">{eyebrow}</p>}
     <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">{title}</h2>
