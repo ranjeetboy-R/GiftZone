@@ -220,7 +220,7 @@ export default function ProductPage({ params }) {
 
                         <div className="mt-7 grid gap-10 lg:grid-cols-2">
                             {/* Images */}
-                            <div className="h-[80vh]">
+                            <div className="md:h-[80vh]">
                                 <ProductImageGallery
                                     images={productImages}
                                     productName={product.name}
