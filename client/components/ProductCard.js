@@ -46,7 +46,7 @@ export default function ProductCard({ product }) {
     return (
         <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_18px_45px_rgba(15,23,42,0.10)]">
             {/* Product Image */}
-            <div className="relative overflow-hidden bg-[#fff8f4]">
+            <div className="relative overflow-hidden">
                 <Link
                     href={`/product/${slug}`}
                     className="relative block aspect-square w-full sm:aspect-4/3 lg:aspect-[1.08/1]"
@@ -57,7 +57,7 @@ export default function ProductCard({ product }) {
                             fill
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                             alt={product.name || 'Product'}
-                            className="object-cover transition duration-700 ease-out group-hover:scale-105"
+                            className="object-contain transition duration-700 ease-out group-hover:scale-105"
                         />
                     }
 

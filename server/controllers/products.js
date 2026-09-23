@@ -26,26 +26,35 @@ export async function listProducts(req, res) {
       const search = req.query.search.trim();
 
       if (search) {
-        filter.$or = [
-          {
-            name: {
-              $regex: search,
-              $options: 'i'
+        const searchWords = search
+          .split(/\s+/)
+          .filter(Boolean)
+          .map(word =>
+            word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          );
+
+        filter.$and = searchWords.map(word => ({
+          $or: [
+            {
+              name: {
+                $regex: word,
+                $options: 'i'
+              }
+            },
+            {
+              description: {
+                $regex: word,
+                $options: 'i'
+              }
+            },
+            {
+              category: {
+                $regex: word,
+                $options: 'i'
+              }
             }
-          },
-          {
-            description: {
-              $regex: search,
-              $options: 'i'
-            }
-          },
-          {
-            category: {
-              $regex: search,
-              $options: 'i'
-            }
-          }
-        ];
+          ]
+        }));
       }
     }
 

@@ -20,8 +20,8 @@ import ProductCard from '@/components/ProductCard';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { apiFetch } from '@/lib/api';
-import Image from 'next/image';
 import ProductSkeleton from './ProductSkeleton';
+import ProductImageGallery from '@/components/ProductImageGallery';
 
 export default function ProductPage({ params }) {
     const { items, addToCart, buyNow } = useCart();
@@ -97,7 +97,7 @@ export default function ProductPage({ params }) {
                 }
 
                 const relatedData = await apiFetch(
-                    `/api/products/related/${encodeURIComponent(found.category)}?exclude=${found._id}&limit=4`
+                    `/api/products/related/${encodeURIComponent(found.category)}?exclude=${found._id}&limit=12`
                 );
 
                 setProducts(
@@ -220,59 +220,11 @@ export default function ProductPage({ params }) {
 
                         <div className="mt-7 grid gap-10 lg:grid-cols-2">
                             {/* Images */}
-                            <div>
-                                {activeImage ? (
-                                    <a
-                                        href={activeImage}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="relative block md:aspect-video md:h-auto h-150 overflow-hidden rounded-2xl border border-slate-300 bg-[#fff7f3] shadow-lg"
-                                    >
-                                        <Image
-                                            src={activeImage}
-                                            fill
-                                            priority
-                                            alt={product.name}
-                                            className="w-full object-cover"
-                                            sizes="(max-width: 1024px) 100vw, 50vw"
-                                        />
-                                    </a>
-                                ) : (
-                                    <div className="flex aspect-video items-center justify-center rounded-2xl border border-slate-300 bg-slate-100 text-sm text-slate-500">
-                                        No image available
-                                    </div>
-                                )}
-
-                                {productImages.length > 0 && (
-                                    <div className="mt-5 flex flex-wrap items-center gap-3">
-                                        {productImages.map(
-                                            (image, index) => (
-                                                <button
-                                                    key={`${image}-${index}`}
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setActiveImage(
-                                                            image
-                                                        )
-                                                    }
-                                                    className={`relative md:h-20 md:w-27 w-25 h-17 overflow-hidden rounded-lg border-2 ${activeImage ===
-                                                        image
-                                                        ? 'border-[#c92532]'
-                                                        : 'border-slate-200'
-                                                        }`}
-                                                >
-                                                    <Image
-                                                        src={image}
-                                                        fill
-                                                        alt={`${product.name} ${index + 1}`}
-                                                        className="object-cover"
-                                                        sizes="108px"
-                                                    />
-                                                </button>
-                                            )
-                                        )}
-                                    </div>
-                                )}
+                            <div className="h-[80vh]">
+                                <ProductImageGallery
+                                    images={productImages}
+                                    productName={product.name}
+                                />
                             </div>
 
                             {/* Details content */}
