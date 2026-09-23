@@ -19,7 +19,7 @@ import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import SectionHeading from '@/components/SectionHeading';
 import { useCart } from '@/context/CartContext';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, apiFetchStream } from '@/lib/api';
 
 import { hero } from '@/public/data/site.json';
 import Testimonials from './Testimonials';
@@ -55,20 +55,51 @@ export default function HomePage() {
       try {
         setLoading(true);
 
-        const [productData, categoryData] = await Promise.all([
-          apiFetch('/api/products?limit=50'),
-          apiFetch('/api/products/categories?limit=8')
+        setProducts([]);
+
+        const categoryPromise = apiFetch(
+          '/api/products/categories?limit=8'
+        );
+
+        const productPromise = apiFetchStream(
+          '/api/products?limit=50',
+          {
+            onProducts: (products) => {
+              if (cancelled) {
+                return;
+              }
+
+              setProducts(currentProducts => {
+                const mergedProducts = [
+                  ...currentProducts,
+                  ...products.map(normalizeProduct)
+                ];
+
+                return Array.from(
+                  new Map(
+                    mergedProducts.map(product => [
+                      product._id,
+                      product
+                    ])
+                  ).values()
+                );
+              });
+            }
+          }
+        );
+
+        const [, categoryData] = await Promise.all([
+          productPromise,
+          categoryPromise
         ]);
 
         if (cancelled) {
           return;
         }
 
-        setProducts(
-          (productData.products || []).map(normalizeProduct)
+        setCategories(
+          categoryData.categories || []
         );
-
-        setCategories(categoryData.categories || []);
       } catch (error) {
         if (!cancelled) {
           console.error(
@@ -101,13 +132,13 @@ export default function HomePage() {
   const best = useMemo(() => {
     return shuffle(
       products.filter(product => product.isFeatured === true)
-    ).slice(0, 8);
+    ).slice(0, 16);
   }, [products]);
 
   const newest = useMemo(() => {
     return shuffle(
       products.filter(product => product.isNewArrival === true)
-    ).slice(0, 8);
+    ).slice(0, 16);
   }, [products]);
 
   const businessProducts = products.slice(8, 12);
@@ -240,13 +271,17 @@ export default function HomePage() {
 
         <section className="bg-slate-50 section-pad">
           <div className="container-width">
-            <SectionHeading
-              eyebrow="Customer Favorites"
-              title="Best Sellers"
-              description="Products our customers keep coming back for."
-              action="View All"
-              href="/shop?best=true"
-            />
+            <div className="flex justify-between items-start">
+              <SectionHeading
+                eyebrow="Customer Favorites"
+                title="Best Sellers"
+                description="Products our customers keep coming back for."
+                action="View All"
+                href="/shop?best=true"
+              />
+
+              <Link href='shop?best=true' className="text-xs whitespace-nowrap border-b px-2 py-1 border-slate-300 hover:bg-rose-100">View all</Link>
+            </div>
 
             <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {loading
@@ -276,13 +311,17 @@ export default function HomePage() {
 
         <section className="section-pad bg-[#fff7f3]">
           <div className="container-width">
-            <SectionHeading
-              eyebrow="Just Added"
-              title="New Arrivals"
-              description="Fresh products added to our store."
-              action="Explore New"
-              href="/shop?new=true"
-            />
+            <div className="flex justify-between items-start">
+              <SectionHeading
+                eyebrow="Just Added"
+                title="New Arrivals"
+                description="Fresh products added to our store."
+                action="Explore New"
+                href="/shop?new=true"
+              />
+
+              <Link href='/shop' className="text-xs whitespace-nowrap border-b px-2 py-1 border-slate-300 hover:bg-rose-100">View all</Link>
+            </div>
 
             <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {loading

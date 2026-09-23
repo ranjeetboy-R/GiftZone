@@ -3,7 +3,10 @@ import Product from '../models/Product.js';
 
 export async function listProducts(req, res) {
   try {
-    const page = Math.max(Number(req.query.page) || 1, 1);
+    const page = Math.max(
+      Number(req.query.page) || 1,
+      1
+    );
 
     const limit = Math.min(
       Math.max(Number(req.query.limit) || 12, 1),
@@ -88,34 +91,103 @@ export async function listProducts(req, res) {
       }
     };
 
-    const sort = sortMap[req.query.sort] || sortMap.newest;
+    const sort =
+      sortMap[req.query.sort] ||
+      sortMap.newest;
 
-    const [products, total] = await Promise.all([
-      Product.find(filter)
-        .select(
-          'name slug price sizes description compareAtPrice images category rating reviews stock isFeatured isNewArrival active'
-        )
-        .sort(sort)
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+    const total = await Product.countDocuments(
+      filter
+    );
 
-      Product.countDocuments(filter)
-    ]);
+    const cursor = Product.find(filter)
+      .select(
+        'name slug price sizes description compareAtPrice images category rating reviews stock isFeatured isNewArrival active'
+      )
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .cursor();
 
-    res.json({
-      products,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.max(Math.ceil(total / limit), 1)
+    res.status(200);
+
+    res.setHeader(
+      'Content-Type',
+      'application/x-ndjson; charset=utf-8'
+    );
+
+    res.setHeader(
+      'Cache-Control',
+      'no-cache, no-transform'
+    );
+
+    res.setHeader(
+      'Transfer-Encoding',
+      'chunked'
+    );
+
+    res.flushHeaders?.();
+
+    res.write(
+      JSON.stringify({
+        type: 'meta',
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.max(
+            Math.ceil(total / limit),
+            1
+          )
+        }
+      }) + '\n'
+    );
+
+    let batch = [];
+
+    for await (const product of cursor) {
+      batch.push(product);
+
+      if (batch.length === 5) {
+        res.write(
+          JSON.stringify({
+            type: 'products',
+            products: batch
+          }) + '\n'
+        );
+
+        batch = [];
+
+        await new Promise(resolve =>
+          setImmediate(resolve)
+        );
       }
-    });
+    }
+
+    if (batch.length > 0) {
+      res.write(
+        JSON.stringify({
+          type: 'products',
+          products: batch
+        }) + '\n'
+      );
+    }
+
+    res.write(
+      JSON.stringify({
+        type: 'done'
+      }) + '\n'
+    );
+
+    res.end();
   } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
+    if (!res.headersSent) {
+      res.status(500).json({
+        message: error.message
+      });
+    } else {
+      res.end();
+    }
   }
 }
 

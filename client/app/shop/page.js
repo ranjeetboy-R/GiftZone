@@ -9,7 +9,7 @@ import LoadingGrid from '@/components/LoadingGrid';
 import EmptyState from '@/components/EmptyState';
 import ErrorState from '@/components/ErrorState';
 import { useCart } from '@/context/CartContext';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, apiFetchStream } from '@/lib/api';
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 
 const PAGE_SIZE = 40;
@@ -91,9 +91,7 @@ export default function ShopPage() {
   const [totalProducts, setTotalProducts] = useState(0);
 
   const [wishlistOnly, setWishlistOnly] = useState(false);
-  const [wishlistIds, setWishlistIds] = useState(
-    () => new Set()
-  );
+  const [wishlistIds, setWishlistIds] = useState(    () => new Set()  );
 
   /*
    * Keep URL filters and local state synchronized.
@@ -195,27 +193,6 @@ export default function ShopPage() {
     };
   }, []);
 
-  /*
-   * Fetch products.
-   *
-   * Search comes from the URL.
-   * Therefore typing in the search box does NOT
-   * trigger an API request.
-   *
-   * API request happens after:
-   * - Search button
-   * - Enter key
-   * - Category change
-   * - Sort change
-   * - Pagination
-   */
-
-  useEffect(() => {
-    updateUrl({
-      category: ''
-    });
-  }, [])
-
   useEffect(() => {
     let cancelled = false;
 
@@ -281,39 +258,53 @@ export default function ShopPage() {
 
       setLoading(true);
       setError('');
+      setCatalog([]);
 
       try {
-        const data = await apiFetch(
+        await apiFetchStream(
           `/api/products?${params.toString()}`,
           {
-            signal: controller.signal
+            signal: controller.signal,
+
+            onMeta: (pagination) => {
+              if (cancelled) {
+                return;
+              }
+
+              setTotalProducts(
+                Number(pagination?.total) || 0
+              );
+
+              setPages(
+                Math.max(
+                  Number(pagination?.pages) || 1,
+                  1
+                )
+              );
+            },
+
+            onProducts: (products) => {
+              if (cancelled) {
+                return;
+              }
+
+              setCatalog(currentCatalog => {
+                const mergedProducts = [
+                  ...currentCatalog,
+                  ...products
+                ];
+
+                return Array.from(
+                  new Map(
+                    mergedProducts.map(product => [
+                      product._id,
+                      product
+                    ])
+                  ).values()
+                );
+              });
+            }
           }
-        );
-
-        if (cancelled) {
-          return;
-        }
-
-        const products = Array.isArray(
-          data?.products
-        )
-          ? data.products
-          : [];
-
-        const pagination =
-          data?.pagination || {};
-
-        setCatalog(products);
-
-        setTotalProducts(
-          Number(pagination.total) || 0
-        );
-
-        setPages(
-          Math.max(
-            Number(pagination.pages) || 1,
-            1
-          )
         );
       } catch (requestError) {
         if (
@@ -916,7 +907,7 @@ export default function ShopPage() {
                           onClick={() => changePage(page - 1)}
                           className="shrink-0 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:text-sm"
                         >
-                          <span className="sm:hidden"><ChevronLeft size={20}/></span>
+                          <span className="sm:hidden"><ChevronLeft size={20} /></span>
                           <span className="hidden sm:inline">Previous</span>
                         </button>
 
@@ -941,8 +932,8 @@ export default function ShopPage() {
                                     : undefined
                                 }
                                 className={`h-9 min-w-9 shrink-0 rounded-lg px-2 text-sm font-bold transition ${item === page
-                                    ? 'bg-[#c92532] text-white shadow-sm'
-                                    : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                                  ? 'bg-[#c92532] text-white shadow-sm'
+                                  : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
                                   }`}
                               >
                                 {item}
@@ -958,7 +949,7 @@ export default function ShopPage() {
                           onClick={() => changePage(page + 1)}
                           className="shrink-0 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:text-sm"
                         >
-                          <span className="sm:hidden"><ChevronRight size={20}/></span>
+                          <span className="sm:hidden"><ChevronRight size={20} /></span>
                           <span className="hidden sm:inline">Next</span>
                         </button>
                       </div>

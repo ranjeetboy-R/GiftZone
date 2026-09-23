@@ -97,7 +97,7 @@ export default function ProductPage({ params }) {
                 }
 
                 const relatedData = await apiFetch(
-                    `/api/products/related/${encodeURIComponent(found.category)}?exclude=${found._id}&limit=12`
+                    `/api/products/related/${encodeURIComponent(found.category)}?exclude=${found._id}&limit=24`
                 );
 
                 setProducts(

@@ -1,5 +1,4 @@
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 // 10 minutes
 const CACHE_TTL = 10 * 60 * 1000;
@@ -105,15 +104,15 @@ export async function apiFetch(path, options = {}) {
     ...(rest.body instanceof FormData
       ? {}
       : {
-          'Content-Type': 'application/json'
-        }),
+        'Content-Type': 'application/json'
+      }),
 
     ...(rest.headers || {}),
 
     ...(token
       ? {
-          Authorization: `Bearer ${token}`
-        }
+        Authorization: `Bearer ${token}`
+      }
       : {})
   };
 
@@ -209,3 +208,74 @@ export async function apiFetch(path, options = {}) {
 }
 
 export { API_URL };
+
+// Stream api 
+export async function apiFetchStream(path, { signal, onMeta, onProducts } = {}) {
+
+  const response = await fetch(`${API_URL}${path}`, {
+    signal,
+    cache: 'no-store'
+  }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Request failed with status ${response.status}`
+    );
+  }
+
+  if (!response.body) {
+    throw new Error(
+      'Streaming is not supported by this response.'
+    );
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { value, done } = await reader.read();
+
+    if (done) {
+      break;
+    }
+
+    buffer += decoder.decode(value, {
+      stream: true
+    }
+    );
+
+    const lines = buffer.split('\n');
+
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (!line.trim()) {
+        continue;
+      }
+
+      const data = JSON.parse(line);
+
+      if (data.type === 'meta') {
+        onMeta?.(data.pagination);
+      }
+
+      if (data.type === 'products') {
+        onProducts?.(data.products || []);
+      }
+    }
+  }
+
+  if (buffer.trim()) {
+    const data = JSON.parse(buffer);
+
+    if (data.type === 'meta') {
+      onMeta?.(data.pagination);
+    }
+
+    if (data.type === 'products') {
+      onProducts?.(data.products || []);
+    }
+  }
+}
