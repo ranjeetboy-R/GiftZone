@@ -265,7 +265,7 @@ export default function ProductImageGallery({
                                         priority={index === 0}
                                         alt={`${productName} ${index + 1}`}
                                         sizes="(max-width: 768px) 100vw, 700px"
-                                        className={`max-h-[600px] w-auto max-w-full object-contain transition-transform duration-300 ${isZoomed
+                                        className={`h-full border-black w-auto max-w-full object-contain transition-transform duration-300 ${isZoomed
                                                 ? "cursor-zoom-out scale-170"
                                                 : "cursor-zoom-in"
                                             }`}
