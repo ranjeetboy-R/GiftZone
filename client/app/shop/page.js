@@ -10,9 +10,9 @@ import EmptyState from '@/components/EmptyState';
 import ErrorState from '@/components/ErrorState';
 import { useCart } from '@/context/CartContext';
 import { apiFetch } from '@/lib/api';
-import { Search, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 40;
 
 const SORT_OPTIONS = [
   {
@@ -906,89 +906,65 @@ export default function ShopPage() {
                   </div>
 
                   {/* Pagination */}
-                  {!wishlistOnly &&
-                    pages > 1 && (
-                      <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
+                  {!wishlistOnly && pages > 1 && (
+                    <div className="mt-16 flex w-full justify-center px-2">
+                      <div className="flex max-w-full items-center justify-center gap-1 overflow-x-auto py-1 scrollbar-hide sm:gap-2">
+                        {/* Previous */}
                         <button
                           type="button"
-                          disabled={
-                            page ===
-                            1
-                          }
-                          onClick={() =>
-                            changePage(
-                              page -
-                              1
-                            )
-                          }
-                          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                          disabled={page === 1}
+                          onClick={() => changePage(page - 1)}
+                          className="shrink-0 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:text-sm"
                         >
-                          Previous
+                          <span className="sm:hidden"><ChevronLeft size={20}/></span>
+                          <span className="hidden sm:inline">Previous</span>
                         </button>
 
-                        {paginationItems.map(
-                          (
-                            item,
-                            index
-                          ) =>
-                            typeof item ===
-                              'string' ? (
+                        {/* Page numbers */}
+                        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                          {paginationItems.map((item, index) =>
+                            typeof item === 'string' ? (
                               <span
-                                key={
-                                  item
-                                }
-                                className="px-1 text-sm text-slate-400"
+                                key={`ellipsis-${index}`}
+                                className="flex h-9 min-w-7 shrink-0 items-center justify-center px-1 text-sm font-semibold text-slate-400 sm:min-w-9"
                               >
                                 …
                               </span>
                             ) : (
                               <button
-                                key={
-                                  item
-                                }
+                                key={item}
                                 type="button"
-                                onClick={() =>
-                                  changePage(
-                                    item
-                                  )
-                                }
+                                onClick={() => changePage(item)}
                                 aria-current={
-                                  item ===
-                                    page
+                                  item === page
                                     ? 'page'
                                     : undefined
                                 }
-                                className={`h-9 min-w-9 rounded-lg px-2 text-sm font-bold transition ${item ===
-                                  page
-                                  ? 'bg-[#c92532] text-white shadow-sm'
-                                  : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                                className={`h-9 min-w-9 shrink-0 rounded-lg px-2 text-sm font-bold transition ${item === page
+                                    ? 'bg-[#c92532] text-white shadow-sm'
+                                    : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
                                   }`}
                               >
-                                {
-                                  item
-                                }
+                                {item}
                               </button>
                             )
-                        )}
+                          )}
+                        </div>
 
+                        {/* Next */}
                         <button
                           type="button"
-                          disabled={
-                            page ===
-                            pages
-                          }
-                          onClick={() =>
-                            changePage(
-                              page +
-                              1
-                            )
-                          }
-                          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                          disabled={page === pages}
+                          onClick={() => changePage(page + 1)}
+                          className="shrink-0 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:text-sm"
                         >
-                          Next
+                          <span className="sm:hidden"><ChevronRight size={20}/></span>
+                          <span className="hidden sm:inline">Next</span>
                         </button>
                       </div>
-                    )}
+                    </div>
+                  )}
+
                 </>
               ) : wishlistOnly ? (
                 <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center sm:p-12">

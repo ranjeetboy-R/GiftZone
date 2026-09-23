@@ -23,6 +23,9 @@ const emptyProduct = {
     images: []
 };
 
+const normalizeText = text =>
+    text?.toLowerCase().trim().replace(/\s+/g, " ") || "";
+
 const page = () => {
     const [products, setProducts] = useState([]);
     const [query, setQuery] = useState("");
@@ -78,7 +81,7 @@ const page = () => {
         setShowProductForm(true);
     };
 
-    
+
 
     const deleteProduct = async (product) => {
         const confirmed = window.confirm(
@@ -109,17 +112,17 @@ const page = () => {
     };
 
     const filteredProducts = useMemo(() => {
-        const value = query.toLowerCase().trim();
+        const value = normalizeText(query);
 
         if (!value) {
             return products;
         }
 
-        return products.filter((product) => {
+        return products.filter(product => {
             return (
-                product.name?.toLowerCase().includes(value) ||
-                product.slug?.toLowerCase().includes(value) ||
-                product.category?.toLowerCase().includes(value)
+                normalizeText(product.name).includes(value) ||
+                normalizeText(product.slug).includes(value) ||
+                normalizeText(product.category).includes(value)
             );
         });
     }, [products, query]);

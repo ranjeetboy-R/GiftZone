@@ -5,11 +5,13 @@
     "phone": "+91 7079459758",
     "email": "giftzone.support@gmail.com"
   },
+
   "announcement": [
     "Free Shipping on Orders Above \u20b9999",
     "Same Day Dispatch on Selected Products",
     "Easy 7-Day Replacement"
   ],
+
   "hero": {
     "eyebrow": "Quality products for everyday life",
     "title": "Shop What You Need, All in One Place",
@@ -17,6 +19,7 @@
     "primaryCta": "Shop Now",
     "secondaryCta": "Explore Collections"
   },
+
   "payment": {
     "qrImage": "/images/payment/qr-placeholder.jpeg",
     "accountName": "Gift Zone Sell Store",
@@ -239,6 +242,7 @@
       "count": 0
     }
   ],
+
   "why": [
     {
       "title": "Chosen for Quality",
@@ -261,6 +265,7 @@
       "icon": "Headphones"
     }
   ],
+
   "testimonials": [
     {
       "name": "Priya Sharma",

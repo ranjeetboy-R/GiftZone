@@ -5,6 +5,7 @@ import { X, Upload, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import toast from "react-hot-toast";
 import { categories as categoriesData } from "@/public/data/site.json";
+import { SIZE_GROUPS } from "@/public/assets";
 
 const emptyProduct = {
     name: "",
@@ -24,73 +25,6 @@ const emptyProduct = {
 };
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-
-const SIZE_GROUPS = [
-    {
-        title: "Clothing",
-        options: [
-            "XS",
-            "S",
-            "M",
-            "L",
-            "XL",
-            "XXL",
-            "3XL",
-            "4XL",
-            "5XL"
-        ]
-    },
-    {
-        title: "Numeric / Waist",
-        options: [
-            "28",
-            "30",
-            "32",
-            "34",
-            "36",
-            "38",
-            "40",
-            "42",
-            "44",
-            "46",
-            "48"
-        ]
-    },
-    {
-        title: "Kids",
-        options: [
-            "0-3M",
-            "3-6M",
-            "6-12M",
-            "1-2Y",
-            "2-3Y",
-            "3-4Y",
-            "5-6Y",
-            "7-8Y",
-            "9-10Y",
-            "11-12Y"
-        ]
-    },
-    {
-        title: "Shoes",
-        options: [
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "11",
-            "12"
-        ]
-    },
-    {
-        title: "Other",
-        options: [
-            "Free Size"
-        ]
-    }
-];
 
 const ProductForm = ({
     setShowProductForm,
@@ -367,7 +301,7 @@ const ProductForm = ({
         }
 
         return null;
-    };    
+    };
 
     const saveProduct = async (event) => {
         event.preventDefault();
@@ -875,58 +809,47 @@ const ProductForm = ({
                         </div>
 
                         <div className="mt-4 space-y-4 rounded-lg border bg-slate-50 p-4">
-                            {SIZE_GROUPS.map(
-                                (group) => (
-                                    <div
-                                        key={
-                                            group.title
-                                        }
-                                    >
+                            {SIZE_GROUPS
+                                .filter((group) =>
+                                    group.categories?.includes(
+                                        productForm?.category
+                                    )
+                                )
+                                .map((group) => (
+                                    <div key={group.title}>
                                         <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                                            {
-                                                group.title
-                                            }
+                                            {group.title}
                                         </p>
 
                                         <div className="flex flex-wrap gap-2">
                                             {group.options.map((size) => {
                                                 const selected = (
-                                                    productForm.sizes ||
-                                                    []
-                                                ).includes(
-                                                    size
-                                                );
+                                                    productForm.sizes || []
+                                                ).includes(size);
 
                                                 return (
                                                     <button
                                                         key={`${group.title}-${size}`}
                                                         type="button"
                                                         onClick={() =>
-                                                            toggleSize(
-                                                                size
-                                                            )
+                                                            toggleSize(size)
                                                         }
                                                         disabled={
                                                             loading ||
                                                             uploadLoading
                                                         }
-                                                        className={`rounded-md border px-4 py-2 text-sm font-bold transition 
-                                                            ${(selected || productForm?.sizes?.includes(size))
-                                                            ? "border-[#c92532] bg-[#c92532] text-white"
-                                                            : "border-slate-300 bg-white text-slate-700 hover:border-[#c92532] hover:text-[#c92532]"
+                                                        className={`rounded-md border px-4 py-2 text-sm font-bold transition ${selected
+                                                                ? "border-[#c92532] bg-[#c92532] text-white"
+                                                                : "border-slate-300 bg-white text-slate-700 hover:border-[#c92532] hover:text-[#c92532]"
                                                             } disabled:cursor-not-allowed disabled:opacity-50`}
                                                     >
-                                                        {
-                                                            size
-                                                        }
+                                                        {size}
                                                     </button>
                                                 );
-                                            }
-                                            )}
+                                            })}
                                         </div>
                                     </div>
-                                )
-                            )}
+                                ))}
                         </div>
 
                         <p className="mt-3 text-xs text-slate-500">
