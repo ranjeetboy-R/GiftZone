@@ -211,11 +211,11 @@ const page = () => {
 
                                             <div>
                                                 <p className="font-bold">
-                                                    {product.name?.slice(0, 20)}...
+                                                    {product.name?.slice(0, 30)}...
                                                 </p>
 
                                                 <p className="text-xs text-slate-400">
-                                                    {product.slug?.slice(0, 20)}...
+                                                    {product.slug?.slice(0, 30)}...
                                                 </p>
                                             </div>
                                         </div>
