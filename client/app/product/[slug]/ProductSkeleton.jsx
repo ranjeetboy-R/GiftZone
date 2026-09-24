@@ -13,18 +13,7 @@ export default function ProductSkeleton() {
             {/* Main Product Section */}
             <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
                 {/* Product Images */}
-                <div>
-                    <div className="aspect-square overflow-hidden rounded-3xl bg-slate-200" />
-
-                    <div className="mt-4 grid grid-cols-5 gap-3">
-                        {Array.from({ length: 5 }).map((_, index) => (
-                            <div
-                                key={index}
-                                className="aspect-square rounded-xl bg-slate-200"
-                            />
-                        ))}
-                    </div>
-                </div>
+                <div className="aspect-square overflow-hidden rounded-3xl bg-slate-200" />
 
                 {/* Product Information */}
                 <div className="flex flex-col">
