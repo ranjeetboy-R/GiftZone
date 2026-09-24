@@ -1,7 +1,127 @@
 import mongoose from 'mongoose';
 import Product from '../models/Product.js';
 
+// List product without stream 
 export async function listProducts(req, res) {
+  try {
+    const page = Math.max(Number(req.query.page) || 1, 1);
+
+    const limit = Math.min(
+      Math.max(Number(req.query.limit) || 12, 1),
+      100
+    );
+
+    const skip = (page - 1) * limit;
+
+    const filter = req.query.all === 'true'
+      ? {}
+      : {
+        active: true
+      };
+
+    if (req.query.category) {
+      filter.category = req.query.category;
+    }
+
+    if (req.query.search) {
+      const search = req.query.search.trim();
+
+      if (search) {
+        const searchWords = search
+          .split(/\s+/)
+          .filter(Boolean)
+          .map(word =>
+            word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          );
+
+        filter.$and = searchWords.map(word => ({
+          $or: [
+            {
+              name: {
+                $regex: word,
+                $options: 'i'
+              }
+            },
+            {
+              description: {
+                $regex: word,
+                $options: 'i'
+              }
+            },
+            {
+              category: {
+                $regex: word,
+                $options: 'i'
+              }
+            }
+          ]
+        }));
+      }
+    }
+
+    if (
+      req.query.featured === 'true' ||
+      req.query.best === 'true'
+    ) {
+      filter.isFeatured = true;
+    }
+
+    if (req.query.new === 'true') {
+      filter.isNewArrival = true;
+    }
+
+    const sortMap = {
+      newest: {
+        createdAt: -1
+      },
+      'price-low': {
+        price: 1
+      },
+      'price-high': {
+        price: -1
+      },
+      rating: {
+        rating: -1,
+        reviews: -1
+      },
+      name: {
+        name: 1
+      }
+    };
+
+    const sort = sortMap[req.query.sort] || sortMap.newest;
+
+    const [products, total] = await Promise.all([
+      Product.find(filter)
+        .select(
+          'name slug price sizes description compareAtPrice images category rating reviews stock isFeatured isNewArrival active'
+        )
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+
+      Product.countDocuments(filter)
+    ]);
+
+    res.json({
+      products,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.max(Math.ceil(total / limit), 1)
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
+  }
+}
+
+// List Product with stream 
+export async function listProductsWithStream(req, res) {
   try {
     const page = Math.max(
       Number(req.query.page) || 1,

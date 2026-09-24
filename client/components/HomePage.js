@@ -19,7 +19,7 @@ import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import SectionHeading from '@/components/SectionHeading';
 import { useCart } from '@/context/CartContext';
-import { apiFetch, apiFetchStream } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 
 import { hero } from '@/public/data/site.json';
 import Testimonials from './Testimonials';
@@ -55,51 +55,20 @@ export default function HomePage() {
       try {
         setLoading(true);
 
-        setProducts([]);
-
-        const categoryPromise = apiFetch(
-          '/api/products/categories?limit=8'
-        );
-
-        const productPromise = apiFetchStream(
-          '/api/products?limit=50',
-          {
-            onProducts: (products) => {
-              if (cancelled) {
-                return;
-              }
-
-              setProducts(currentProducts => {
-                const mergedProducts = [
-                  ...currentProducts,
-                  ...products.map(normalizeProduct)
-                ];
-
-                return Array.from(
-                  new Map(
-                    mergedProducts.map(product => [
-                      product._id,
-                      product
-                    ])
-                  ).values()
-                );
-              });
-            }
-          }
-        );
-
-        const [, categoryData] = await Promise.all([
-          productPromise,
-          categoryPromise
+        const [productData, categoryData] = await Promise.all([
+          apiFetch('/api/products?limit=50'),
+          apiFetch('/api/products/categories?limit=8')
         ]);
 
         if (cancelled) {
           return;
         }
 
-        setCategories(
-          categoryData.categories || []
+        setProducts(
+          (productData.products || []).map(normalizeProduct)
         );
+
+        setCategories(categoryData.categories || []);
       } catch (error) {
         if (!cancelled) {
           console.error(
@@ -188,6 +157,7 @@ export default function HomePage() {
               <Image
                 src="/images/hero.png"
                 fill
+                sizes='100vw'
                 alt="Hero banner"
                 className="select-none"
                 priority

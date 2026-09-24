@@ -35,7 +35,7 @@ const emptyProduct = {
     images: []
 };
 
-const PAGE_SIZE = 30;
+const PAGE_SIZE = 20;
 
 const normalizeText = text =>
     text?.toLowerCase().trim().replace(/\s+/g, " ") || "";
@@ -53,46 +53,56 @@ const page = () => {
     const [pages, setPages] = useState(1);
     const [totalProducts, setTotalProducts] = useState(0);
 
-    const loadProducts = async (currentPage = page) => {
+    const loadProducts = async (
+        currentPage = page,
+        searchQuery = query
+    ) => {
         try {
             setLoading(true);
-
             setProducts([]);
 
-            await apiFetchStream(
-                `/api/products?all=true&page=${currentPage}&limit=${PAGE_SIZE}`,
-                {
-                    onMeta: pagination => {
-                        setTotalProducts(
-                            Number(pagination?.total) || 0
-                        );
+            const params = new URLSearchParams();
 
-                        setPages(
-                            Math.max(
-                                Number(pagination?.pages) || 1,
-                                1
-                            )
-                        );
-                    },
+            params.set('all', 'true');
+            params.set(
+                'page',
+                String(currentPage)
+            );
+            params.set(
+                'limit',
+                String(PAGE_SIZE)
+            );
 
-                    onProducts: products => {
-                        setProducts(currentProducts => {
-                            const mergedProducts = [
-                                ...currentProducts,
-                                ...products
-                            ];
+            if (searchQuery.trim()) {
+                params.set(
+                    'search',
+                    searchQuery.trim()
+                );
+            }
 
-                            return Array.from(
-                                new Map(
-                                    mergedProducts.map(product => [
-                                        product._id,
-                                        product
-                                    ])
-                                ).values()
-                            );
-                        });
-                    }
-                }
+            const data = await apiFetch(
+                `/api/products?${params.toString()}`
+            );
+
+            const loadedProducts =
+                Array.isArray(data?.products)
+                    ? data.products
+                    : [];
+
+            const pagination =
+                data?.pagination || {};
+
+            setProducts(loadedProducts);
+
+            setTotalProducts(
+                Number(pagination.total) || 0
+            );
+
+            setPages(
+                Math.max(
+                    Number(pagination.pages) || 1,
+                    1
+                )
             );
         } catch (error) {
             console.error(
@@ -189,43 +199,35 @@ const page = () => {
         }
     };
 
-    const filteredProducts = useMemo(() => {
-        const value = normalizeText(query);
+    useEffect(() => {
+  const timer = setTimeout(() => {
+    setPage(1);
+    loadProducts(1, query);
+  }, 300);
 
-        if (!value) {
-            return products;
-        }
-
-        return products.filter(product => {
-            return (
-                normalizeText(
-                    product.name
-                ).includes(value) ||
-                normalizeText(
-                    product.slug
-                ).includes(value) ||
-                normalizeText(
-                    product.category
-                ).includes(value)
-            );
-        });
-    }, [products, query]);
+  return () => {
+    clearTimeout(timer);
+  };
+}, [query]);
 
     /*
      * Pagination
      */
     const changePage = nextPage => {
-        if (
-            nextPage < 1 ||
-            nextPage > pages ||
-            nextPage === page
-        ) {
-            return;
-        }
+  if (
+    nextPage < 1 ||
+    nextPage > pages ||
+    nextPage === page
+  ) {
+    return;
+  }
 
-        setPage(nextPage);
-        loadProducts(nextPage);
-    };
+  setPage(nextPage);
+  loadProducts(
+    nextPage,
+    query
+  );
+};
 
     /*
      * Pagination items
@@ -362,7 +364,7 @@ const page = () => {
                         </thead>
 
                         <tbody>
-                            {filteredProducts.map(
+                            {products.map(
                                 product => (
                                     <tr
                                         key={
@@ -512,7 +514,7 @@ const page = () => {
                         </tbody>
                     </table>
 
-                    {!filteredProducts.length && (
+                    {!products.length && (
                         <div className="py-16 text-center text-sm text-slate-500">
                             No products found.
                         </div>
@@ -578,9 +580,9 @@ const page = () => {
                                                             : undefined
                                                     }
                                                     className={`h-9 min-w-9 shrink-0 rounded-lg px-2 text-sm font-bold transition ${item ===
-                                                            page
-                                                            ? "bg-[#c92532] text-white shadow-sm"
-                                                            : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                                                        page
+                                                        ? "bg-[#c92532] text-white shadow-sm"
+                                                        : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                                                         }`}
                                                 >
                                                     {

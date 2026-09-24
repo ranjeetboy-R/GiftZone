@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -201,7 +201,7 @@ export default function ProductPage({ params }) {
                 <main className="section-pad">
                     <div className="container-width">
                         <div className="text-sm text-slate-400">
-                            <Link href="/shop">
+                            <Link href="/shop" className='text-black font-medium'>
                                 Shop
                             </Link>
 
@@ -214,7 +214,7 @@ export default function ProductPage({ params }) {
                             {' / '}
 
                             <span className="text-slate-600">
-                                {product.name}
+                                {product.name.slice(0, 20)}...
                             </span>
                         </div>
 

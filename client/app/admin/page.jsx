@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, apiFetchStream } from '@/lib/api';
 import DashboardStats from './adminComponents/DashboardStats';
 import RecentOrders from './adminComponents/RecentOrders';
 import InventoryAlerts from './adminComponents/InventoryAlerts';
@@ -14,6 +14,7 @@ export default function AdminPage() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
+    const [totalProducts, setTotalProducts] = useState(0);
 
     const loadDashboard = async (isRefresh = false) => {
         try {
@@ -24,17 +25,59 @@ export default function AdminPage() {
             }
 
             setError('');
+            setProducts([]);
 
-            const [productsData, ordersData] = await Promise.all([
-                apiFetch('/api/products?all=true&limit=100'),
-                apiFetch('/api/orders')
+            const productsPromise = apiFetchStream(
+                '/api/products/stream?all=true',
+                {
+                    onMeta: pagination => {
+                        setTotalProducts(
+                            Number(pagination?.total) || 0
+                        );
+                    },
+
+                    onProducts: products => {
+                        setProducts(currentProducts => {
+                            const mergedProducts = [
+                                ...currentProducts,
+                                ...products
+                            ];
+
+                            return Array.from(
+                                new Map(
+                                    mergedProducts.map(product => [
+                                        product._id,
+                                        product
+                                    ])
+                                ).values()
+                            );
+                        });
+                    }
+                }
+            );
+
+            const ordersPromise = apiFetch(
+                '/api/orders'
+            );
+
+            await Promise.all([
+                productsPromise,
+                ordersPromise.then(ordersData => {
+                    setOrders(
+                        ordersData?.orders || []
+                    );
+                })
             ]);
-
-            setProducts(productsData?.products || []);
-            setOrders(ordersData?.orders || []);
         } catch (error) {
-            console.error('Failed to load dashboard:', error);
-            setError(error.message || 'Failed to load dashboard.');
+            console.error(
+                'Failed to load dashboard:',
+                error
+            );
+
+            setError(
+                error.message ||
+                'Failed to load dashboard.'
+            );
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -119,7 +162,7 @@ export default function AdminPage() {
             )}
 
             <DashboardStats
-                products={products.length}
+                products={totalProducts}
                 orders={orders.length}
                 customers={customers}
                 revenue={revenue}
