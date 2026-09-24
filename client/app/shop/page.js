@@ -91,7 +91,7 @@ export default function ShopPage() {
   const [totalProducts, setTotalProducts] = useState(0);
 
   const [wishlistOnly, setWishlistOnly] = useState(false);
-  const [wishlistIds, setWishlistIds] = useState(    () => new Set()  );
+  const [wishlistIds, setWishlistIds] = useState(() => new Set());
 
   /*
    * Keep URL filters and local state synchronized.
@@ -261,50 +261,31 @@ export default function ShopPage() {
       setCatalog([]);
 
       try {
-        await apiFetchStream(
-          `/api/products?${params.toString()}`,
-          {
-            signal: controller.signal,
+        const data = await apiFetch(
+          `/api/products?${params.toString()}`
+        );
 
-            onMeta: (pagination) => {
-              if (cancelled) {
-                return;
-              }
+        if (cancelled) {
+          return;
+        }
 
-              setTotalProducts(
-                Number(pagination?.total) || 0
-              );
+        const products = Array.isArray(data?.products)
+          ? data.products
+          : [];
 
-              setPages(
-                Math.max(
-                  Number(pagination?.pages) || 1,
-                  1
-                )
-              );
-            },
+        const pagination = data?.pagination || {};
 
-            onProducts: (products) => {
-              if (cancelled) {
-                return;
-              }
+        setCatalog(products);
 
-              setCatalog(currentCatalog => {
-                const mergedProducts = [
-                  ...currentCatalog,
-                  ...products
-                ];
+        setTotalProducts(
+          Number(pagination.total) || 0
+        );
 
-                return Array.from(
-                  new Map(
-                    mergedProducts.map(product => [
-                      product._id,
-                      product
-                    ])
-                  ).values()
-                );
-              });
-            }
-          }
+        setPages(
+          Math.max(
+            Number(pagination.pages) || 1,
+            1
+          )
         );
       } catch (requestError) {
         if (
@@ -333,7 +314,6 @@ export default function ShopPage() {
 
     return () => {
       cancelled = true;
-      controller.abort();
     };
   }, [page, searchParams]);
 

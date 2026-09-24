@@ -456,14 +456,14 @@ export default function CheckoutPage() {
                         </div>
 
                         <Link
-                            href="/cart"
+                            href="/shop"
                             className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-[#c92532]/30 hover:text-[#c92532]"
                         >
                             <ArrowLeft
                                 size={16}
                                 className="transition-transform group-hover:-translate-x-1"
                             />
-                            Back to cart
+                            Back to shop
                         </Link>
                     </div>
 
