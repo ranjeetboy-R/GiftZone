@@ -1,7 +1,7 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-// 10 minutes
-const CACHE_TTL = 10 * 60 * 1000;
+// 1 hour
+const CACHE_TTL = 60 * 60 * 1000;
 
 const productCache = new Map();
 const productListCache = new Map();
