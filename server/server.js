@@ -8,6 +8,8 @@ import orderRoutes from './routes/orders.js';
 import adminRoutes from './routes/admin.js';
 import uploadRoutes from './routes/upload.js';
 import cookieParser from 'cookie-parser';
+import userRouter from './routes/userRouter.js';
+import { handleClerkWebhook } from './controllers/clerkWebhookController.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,6 +30,7 @@ app.use(cors({
   credentials: true
 }));
 
+app.use('/api/clerk', express.raw({ type: 'application/json' }), handleClerkWebhook);
 app.use(cookieParser());
 app.use(express.json({ limit: '2mb' }));
 app.use(clerk);
@@ -43,6 +46,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/users', userRouter);
 
 app.use((err, req, res, next) => {
   console.error(err);

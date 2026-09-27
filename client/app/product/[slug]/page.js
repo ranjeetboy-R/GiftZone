@@ -33,7 +33,6 @@ export default function ProductPage({ params }) {
     const [reviews, setReviews] = useState([]);
     const [product, setProduct] = useState(null);
     const [quantity, setQuantity] = useState(1);
-    const [activeImage, setActiveImage] = useState('');
     const [reviewMessage, setReviewMessage] = useState('');
     const [getProductLoading, setGetProductLoading] = useState(false);
     const [selectedSize, setSelectedSize] = useState('m');
@@ -84,12 +83,6 @@ export default function ProductPage({ params }) {
 
                 setProduct(found);
 
-                setActiveImage(
-                    found?.images?.[0] ||
-                    found?.image ||
-                    ''
-                );
-
                 if (!found) {
                     setProducts([]);
                     setReviews([]);
@@ -117,7 +110,6 @@ export default function ProductPage({ params }) {
                 setProduct(null);
                 setProducts([]);
                 setReviews([]);
-                setActiveImage('');
             }
             finally {
                 setGetProductLoading(false);

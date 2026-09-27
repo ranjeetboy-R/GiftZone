@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
 import Product from '../models/Product.js';
+import { getProductCacheVersion, invalidateProductCache } from '../utils/productCache.js';
+import redis from '../config/redis.js';
 
-// List product without stream 
+// List product without stream
 export async function listProducts(req, res) {
   try {
     const page = Math.max(Number(req.query.page) || 1, 1);
@@ -91,6 +93,23 @@ export async function listProducts(req, res) {
 
     const sort = sortMap[req.query.sort] || sortMap.newest;
 
+    // Redis cache key
+    const version = await getProductCacheVersion();
+
+    const cacheKey = `products:v${version}:${JSON.stringify({
+      filter,
+      sort,
+      page,
+      limit
+    })}`;
+
+    // Get from Redis
+    const cachedData = await redis.get(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json(cachedData);
+    }
+
     const [products, total] = await Promise.all([
       Product.find(filter)
         .select(
@@ -104,7 +123,7 @@ export async function listProducts(req, res) {
       Product.countDocuments(filter)
     ]);
 
-    res.json({
+    const result = {
       products,
       pagination: {
         page,
@@ -112,7 +131,18 @@ export async function listProducts(req, res) {
         total,
         pages: Math.max(Math.ceil(total / limit), 1)
       }
-    });
+    };
+
+    // Save in Redis for 1 hour
+    await redis.set(
+      cacheKey,
+      result,
+      {
+        ex: 60 * 60
+      }
+    );
+
+    return res.status(200).json(result);
   } catch (error) {
     res.status(500).json({
       message: error.message
@@ -120,7 +150,7 @@ export async function listProducts(req, res) {
   }
 }
 
-// List Product with stream 
+// List Product with stream
 export async function listProductsWithStream(req, res) {
   try {
     const page = Math.max(
@@ -215,19 +245,18 @@ export async function listProductsWithStream(req, res) {
       sortMap[req.query.sort] ||
       sortMap.newest;
 
-    const total = await Product.countDocuments(
-      filter
-    );
+    // Redis cache key
+    const version = await getProductCacheVersion();
 
-    const cursor = Product.find(filter)
-      .select(
-        'name slug price sizes description compareAtPrice images category rating reviews stock isFeatured isNewArrival active'
-      )
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .lean()
-      .cursor();
+    const cacheKey = `products:stream:v${version}:${JSON.stringify({
+      filter,
+      sort,
+      page,
+      limit
+    })}`;
+
+    // Get from Redis
+    const cachedData = await redis.get(cacheKey);
 
     res.status(200);
 
@@ -248,6 +277,70 @@ export async function listProductsWithStream(req, res) {
 
     res.flushHeaders?.();
 
+    // Redis cache hit
+    if (cachedData) {
+      res.write(
+        JSON.stringify({
+          type: 'meta',
+          pagination: cachedData.pagination
+        }) + '\n'
+      );
+
+      let batch = [];
+
+      for (const product of cachedData.products) {
+        batch.push(product);
+
+        if (batch.length === 5) {
+          res.write(
+            JSON.stringify({
+              type: 'products',
+              products: batch
+            }) + '\n'
+          );
+
+          batch = [];
+
+          await new Promise(resolve =>
+            setImmediate(resolve)
+          );
+        }
+      }
+
+      if (batch.length > 0) {
+        res.write(
+          JSON.stringify({
+            type: 'products',
+            products: batch
+          }) + '\n'
+        );
+      }
+
+      res.write(
+        JSON.stringify({
+          type: 'done'
+        }) + '\n'
+      );
+
+      return res.end();
+    }
+
+    const total = await Product.countDocuments(
+      filter
+    );
+
+    const cursor = Product.find(filter)
+      .select(
+        'name slug price sizes description compareAtPrice images category rating reviews stock isFeatured isNewArrival active'
+      )
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .cursor();
+
+    const products = [];
+
     res.write(
       JSON.stringify({
         type: 'meta',
@@ -266,6 +359,8 @@ export async function listProductsWithStream(req, res) {
     let batch = [];
 
     for await (const product of cursor) {
+      products.push(product);
+
       batch.push(product);
 
       if (batch.length === 5) {
@@ -292,6 +387,28 @@ export async function listProductsWithStream(req, res) {
         }) + '\n'
       );
     }
+
+    const result = {
+      products,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.max(
+          Math.ceil(total / limit),
+          1
+        )
+      }
+    };
+
+    // Save in Redis for 1 hour
+    await redis.set(
+      cacheKey,
+      result,
+      {
+        ex: 60 * 60
+      }
+    );
 
     res.write(
       JSON.stringify({
@@ -427,6 +544,7 @@ export async function createProduct(req, res) {
     }
 
     const product = await Product.create(payload);
+    await invalidateProductCache();
 
     res.status(201).json({
       message: 'Product created successfully',
@@ -489,12 +607,14 @@ export async function updateProduct(req, res) {
       }
     );
 
+
     if (!product) {
       return res.status(404).json({
         message: 'Product not found'
       });
     }
 
+    await invalidateProductCache();
     res.json({
       message: 'Product updated successfully',
       product
@@ -528,6 +648,8 @@ export async function deleteProduct(req, res) {
         message: 'Product not found'
       });
     }
+
+    await invalidateProductCache();
 
     res.json({
       success: true
@@ -579,6 +701,16 @@ export async function getCategories(req, res) {
       )
       : null;
 
+    const version = await getProductCacheVersion();
+
+    const cacheKey = `categories:v${version}:${limit ?? 'all'}`;
+
+    const cachedData = await redis.get(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json(cachedData);
+    }
+
     const pipeline = [
       {
         $match: {
@@ -612,13 +744,23 @@ export async function getCategories(req, res) {
 
     const categories = await Product.aggregate(pipeline);
 
-    res.json({
+    const result = {
       categories: categories.map(item => ({
         slug: item._id,
         name: formatCategoryName(item._id),
         count: item.count
       }))
-    });
+    };
+
+    await redis.set(
+      cacheKey,
+      result,
+      {
+        ex: 60 * 60 * 6
+      }
+    );
+
+    return res.status(200).json(result);
   } catch (error) {
     res.status(500).json({
       message: error.message
