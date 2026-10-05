@@ -295,7 +295,7 @@ export default function UsersPage() {
                           {user.imageUrl ? (
                             <img
                               src={user.imageUrl}
-                              alt={name}
+                              alt={name || 'Profile pic'}
                               className="h-10 w-10 rounded-full object-cover"
                             />
                           ) : (
@@ -322,7 +322,7 @@ export default function UsersPage() {
                         </p>
 
                         <p className="mt-1 text-xs text-slate-500">
-                          {user.phone || 'No phone'}
+                          {user.phone || ''}
                         </p>
                       </td>
 
