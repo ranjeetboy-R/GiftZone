@@ -9,26 +9,60 @@ import Footer from '@/components/Footer';
 import { apiFetch } from '@/lib/api';
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState([]);
-  const {getToken} = useAuth();
+  const [ordersState, setOrdersState] = useState({
+    userId: null,
+    orders: []
+  });
+  const { getToken, isLoaded, userId } = useAuth();
+  const orders = ordersState.userId === userId
+    ? ordersState.orders
+    : [];
 
   useEffect(() => {
+    let cancelled = false;
+
+    if (!isLoaded || !userId) {
+      setOrdersState({ userId: null, orders: [] });
+      return () => {
+        cancelled = true;
+      };
+    }
+
     const getOrders = async () => {
       try {
         const token = await getToken();
         const data = await apiFetch('/api/orders/mine', {
-          token
+          token,
+          onUpdate: freshData => {
+            if (!cancelled) {
+              setOrdersState({
+                userId,
+                orders: freshData.orders || []
+              });
+            }
+          }
         });
 
-        setOrders(data.orders || []);
+        if (!cancelled) {
+          setOrdersState({
+            userId,
+            orders: data.orders || []
+          });
+        }
       } catch (error) {
         console.error('Failed to fetch orders:', error);
-        setOrders([]);
+        if (!cancelled) {
+          setOrdersState({ userId, orders: [] });
+        }
       }
     };
 
     getOrders();
-  }, []);  
+
+    return () => {
+      cancelled = true;
+    };
+  }, [getToken, isLoaded, userId]);
 
   return <>
     <Header />

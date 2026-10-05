@@ -6,19 +6,37 @@ import { ArrowRight, ArrowUpRight, FolderOpen, RefreshCw, Sparkles } from 'lucid
 
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, getCachedApiData } from '@/lib/api';
 
 export default function CategoriesPage() {
-    const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [initialData] = useState(
+        () => getCachedApiData('/api/products/categories')
+    );
+    const [categories, setCategories] = useState(
+        () => initialData?.categories || []
+    );
+    const [loading, setLoading] = useState(
+        () => initialData === undefined
+    );
     const [error, setError] = useState('');
 
     const loadCategories = async () => {
         try {
-            setLoading(true);
+            const cachedData = getCachedApiData('/api/products/categories');
+            setLoading(cachedData === undefined);
             setError('');
 
-            const data = await apiFetch('/api/products/categories');
+            if (cachedData !== undefined) {
+                setCategories(cachedData.categories || []);
+            }
+
+            const data = await apiFetch('/api/products/categories', {
+                onUpdate: freshData => {
+                    if (Array.isArray(freshData?.categories)) {
+                        setCategories(freshData.categories);
+                    }
+                }
+            });
 
             if (!data || !Array.isArray(data.categories)) {
                 throw new Error('Invalid category data.');

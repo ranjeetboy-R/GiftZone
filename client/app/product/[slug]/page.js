@@ -19,7 +19,7 @@ import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, getCachedApiData } from '@/lib/api';
 import ProductSkeleton from './ProductSkeleton';
 import ProductImageGallery from '@/components/ProductImageGallery';
 
@@ -28,10 +28,34 @@ export default function ProductPage({ params }) {
     const { toggleWishlist, isWishlisted } = useWishlist();
     const { slug: routeSlug } = useParams();
 
-    const [slug, setSlug] = useState('');
-    const [products, setProducts] = useState([]);
+    const [initialPageData] = useState(() => {
+        const initialSlug = Array.isArray(routeSlug)
+            ? routeSlug[0]
+            : routeSlug || '';
+        const productData = initialSlug
+            ? getCachedApiData(
+                `/api/products/${encodeURIComponent(initialSlug)}`
+            )
+            : undefined;
+        const product = productData?.product || null;
+
+        return {
+            slug: initialSlug,
+            product,
+            related: product
+                ? getCachedApiData(
+                    `/api/products/related/${encodeURIComponent(product.category)}?exclude=${product._id}&limit=24`
+                )
+                : undefined
+        };
+    });
+
+    const [slug, setSlug] = useState(initialPageData.slug);
+    const [products, setProducts] = useState(
+        () => initialPageData.related?.products || []
+    );
     const [reviews, setReviews] = useState([]);
-    const [product, setProduct] = useState(null);
+    const [product, setProduct] = useState(initialPageData.product);
     const [quantity, setQuantity] = useState(1);
     const [reviewMessage, setReviewMessage] = useState('');
     const [getProductLoading, setGetProductLoading] = useState(false);
@@ -72,14 +96,26 @@ export default function ProductPage({ params }) {
     useEffect(() => {
         if (!slug) { return; }
 
-        const getProduct = async () => {
-            try {
-                setGetProductLoading(true);
-                const productData = await apiFetch(
-                    `/api/products/${encodeURIComponent(slug)}`
-                );
+        let cancelled = false;
+        const productPath = `/api/products/${encodeURIComponent(slug)}`;
+        const cachedProductData = getCachedApiData(productPath);
 
-                const found = productData.product || null;
+        const getProduct = async () => {
+            let loadedProductData = cachedProductData !== undefined;
+
+            if (cachedProductData === undefined) {
+                setGetProductLoading(true);
+            } else {
+                setGetProductLoading(false);
+                setProduct(cachedProductData.product || null);
+            }
+
+            const applyProductData = async productData => {
+                const found = productData?.product || null;
+
+                if (cancelled) {
+                    return;
+                }
 
                 setProduct(found);
 
@@ -89,13 +125,32 @@ export default function ProductPage({ params }) {
                     return;
                 }
 
-                const relatedData = await apiFetch(
-                    `/api/products/related/${encodeURIComponent(found.category)}?exclude=${found._id}&limit=24`
-                );
+                const relatedPath = `/api/products/related/${encodeURIComponent(found.category)}?exclude=${found._id}&limit=24`;
+                const relatedData = await apiFetch(relatedPath, {
+                    onUpdate: freshData => {
+                        if (!cancelled) {
+                            setProducts(freshData.products || []);
+                        }
+                    }
+                });
 
-                setProducts(
-                    relatedData.products || []
-                );
+                if (!cancelled) {
+                    setProducts(relatedData.products || []);
+                }
+            };
+
+            try {
+                const productData = await apiFetch(productPath, {
+                    onUpdate: freshData => {
+                        loadedProductData = true;
+                        void applyProductData(freshData).catch(error => {
+                            console.error('Failed to refresh related products:', error);
+                        });
+                    }
+                });
+
+                loadedProductData = true;
+                await applyProductData(productData);
 
                 const reviewResponse = await fetch(
                     '/data/reviews.json'
@@ -104,19 +159,29 @@ export default function ProductPage({ params }) {
                 const reviewData =
                     await reviewResponse.json();
 
-                setReviews(reviewData || []);
+                if (!cancelled) {
+                    setReviews(reviewData || []);
+                }
             } catch (error) {
                 console.error('Failed to fetch product:', error);
-                setProduct(null);
-                setProducts([]);
-                setReviews([]);
+                if (!cancelled && !loadedProductData) {
+                    setProduct(null);
+                    setProducts([]);
+                    setReviews([]);
+                }
             }
             finally {
-                setGetProductLoading(false);
+                if (!cancelled) {
+                    setGetProductLoading(false);
+                }
             }
         };
 
         getProduct();
+
+        return () => {
+            cancelled = true;
+        };
     }, [slug]);
 
     const related = products;
