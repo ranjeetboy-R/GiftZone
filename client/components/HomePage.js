@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   ArrowRight,
   Heart,
@@ -10,41 +10,32 @@ import {
   Headphones,
   MoveRight,
   Sparkles,
-  ArrowUpRight
-} from 'lucide-react';
-import Image from 'next/image';
+  ArrowUpRight,
+} from "lucide-react";
+import Image from "next/image";
 
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import ProductCard from '@/components/ProductCard';
-import SectionHeading from '@/components/SectionHeading';
-import { useCart } from '@/context/CartContext';
-import { apiFetch } from '@/lib/api';
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import ProductCard from "@/components/ProductCard";
+import SectionHeading from "@/components/SectionHeading";
+import { useCart } from "@/context/CartContext";
+import { apiFetch } from "@/lib/api";
 
-import { hero } from '@/public/data/site.json';
-import Testimonials from './Testimonials';
+import { hero } from "@/public/data/site.json";
+import Testimonials from "./Testimonials";
 
 const icons = {
   Heart,
   Gift,
   ShieldCheck,
-  Headphones
-};
-
-const normalizeProduct = product => ({
-  ...product,
-  id: product._id || product.id,
-  image: product.images?.[0] || product.image
-});
-
-const shuffle = (array) => {
-  return [...array].sort(() => Math.random() - 0.5);
+  Headphones,
 };
 
 export default function HomePage() {
   const { items } = useCart();
 
-  const [products, setProducts] = useState([]);
+  const [best, setBest] = useState([]);
+  const [newProduct, setNewProduct] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,28 +46,15 @@ export default function HomePage() {
       try {
         setLoading(true);
 
-        const [productData, categoryData] = await Promise.all([
-          apiFetch('/api/products?limit=50'),
-          apiFetch('/api/products/categories?limit=8')
-        ]);
+        const categoryData = await apiFetch("/api/products/categories?limit=8");
 
         if (cancelled) {
           return;
         }
 
-        setProducts(
-          (productData.products || []).map(normalizeProduct)
-        );
-
         setCategories(categoryData.categories || []);
       } catch (error) {
         if (!cancelled) {
-          console.error(
-            'Failed to load homepage data:',
-            error
-          );
-
-          setProducts([]);
           setCategories([]);
         }
       } finally {
@@ -93,24 +71,26 @@ export default function HomePage() {
     };
   }, []);
 
-  const cartCount = items.reduce(
-    (sum, item) => sum + item.quantity,
-    0
-  );
+  useEffect(() => {
+    const loadProduct = async () => {
+      try {
+        const [bestItem, newItem] = await Promise.all([
+          apiFetch("/api/products/best"),
+          apiFetch("/api/products/new"),
+        ]);
 
-  const best = useMemo(() => {
-    return shuffle(
-      products.filter(product => product.isFeatured === true)
-    ).slice(0, 16);
-  }, [products]);
+        setBest(bestItem?.products || []);
+        setNewProduct(newItem?.products || []);
+      } catch (error) {
+      }
+    };
 
-  const newest = useMemo(() => {
-    return shuffle(
-      products.filter(product => product.isNewArrival === true)
-    ).slice(0, 16);
-  }, [products]);
+    loadProduct();
+  }, []);
 
-  const businessProducts = products.slice(8, 12);
+  const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  const businessProducts = best?.slice(12, 16);
 
   return (
     <>
@@ -126,9 +106,7 @@ export default function HomePage() {
 
               <h1 className="mt-10 text-5xl md:text-7xl font-semibold font-super">
                 <p>Make Every Moment</p>
-                <p className="text-rose-500">
-                  More Special
-                </p>
+                <p className="text-rose-500">More Special</p>
               </h1>
 
               <p className="max-w-lg w-full mt-5 text-slate-700">
@@ -157,7 +135,7 @@ export default function HomePage() {
               <Image
                 src="/images/hero.png"
                 fill
-                sizes='100vw'
+                sizes="100vw"
                 alt="Hero banner"
                 className="select-none"
                 priority
@@ -175,9 +153,8 @@ export default function HomePage() {
             />
 
             <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {loading ? (
-                Array.from({ length: 6 }).map(
-                  (_, index) => (
+              {loading
+                ? Array.from({ length: 6 }).map((_, index) => (
                     <div
                       key={index}
                       className="rounded-xl border border-slate-200 bg-white p-4"
@@ -186,55 +163,52 @@ export default function HomePage() {
                       <div className="mt-4 h-4 rounded bg-slate-100 animate-pulse" />
                       <div className="mt-2 h-3 w-20 mx-auto rounded bg-slate-100 animate-pulse" />
                     </div>
-                  )
-                )
-              ) : (
-                categories.map(item => (
-                  <Link
-                    key={item.slug}
-                    href={`/shop?category=${encodeURIComponent(item.slug)}`}
-                    aria-label={`Explore ${item.name}`}
-                    className="group relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#c92532]/20 hover:shadow-xl md:p-7"
-                  >
-                    <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-[#c92532]/5 transition-transform duration-500 group-hover:scale-150" />
+                  ))
+                : categories.map((item) => (
+                    <Link
+                      key={item.slug}
+                      href={`/shop?category=${encodeURIComponent(item.slug)}`}
+                      aria-label={`Explore ${item.name}`}
+                      className="group relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#c92532]/20 hover:shadow-xl md:p-7"
+                    >
+                      <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-[#c92532]/5 transition-transform duration-500 group-hover:scale-150" />
 
-                    <div className="relative">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#c92532]/10 text-[#c92532] transition-all duration-300 group-hover:scale-105 group-hover:bg-[#c92532] group-hover:text-white">
-                          <Sparkles size={25} strokeWidth={1.8} />
+                      <div className="relative">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#c92532]/10 text-[#c92532] transition-all duration-300 group-hover:scale-105 group-hover:bg-[#c92532] group-hover:text-white">
+                            <Sparkles size={25} strokeWidth={1.8} />
+                          </div>
+
+                          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-all duration-300 group-hover:border-[#c92532] group-hover:bg-[#c92532] group-hover:text-white">
+                            <ArrowUpRight
+                              size={18}
+                              className="transition-transform duration-300 group-hover:rotate-45"
+                            />
+                          </span>
                         </div>
 
-                        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-all duration-300 group-hover:border-[#c92532] group-hover:bg-[#c92532] group-hover:text-white">
-                          <ArrowUpRight
-                            size={18}
-                            className="transition-transform duration-300 group-hover:rotate-45"
-                          />
-                        </span>
-                      </div>
+                        <div className="mt-8">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c92532]">
+                            {item.cartCount > 0
+                              ? `${item.cartCount}+ Products`
+                              : "Explore Products"}
+                          </p>
 
-                      <div className="mt-8">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c92532]">
-                          {item.cartCount > 0
-                            ? `${item.cartCount}+ Products`
-                            : 'Explore Products'}
-                        </p>
+                          <h2 className="mt-2 text-xl font-extrabold tracking-tight text-slate-900 md:text-2xl">
+                            {item.name}
+                          </h2>
 
-                        <h2 className="mt-2 text-xl font-extrabold tracking-tight text-slate-900 md:text-2xl">
-                          {item.name}
-                        </h2>
-
-                        <div className="mt-5 flex items-center gap-2 text-sm font-semibold text-slate-500 transition-colors duration-300 group-hover:text-[#c92532]">
-                          Explore Collection
-                          <ArrowRight
-                            size={16}
-                            className="transition-transform duration-300 group-hover:translate-x-1"
-                          />
+                          <div className="mt-5 flex items-center gap-2 text-sm font-semibold text-slate-500 transition-colors duration-300 group-hover:text-[#c92532]">
+                            Explore Collection
+                            <ArrowRight
+                              size={16}
+                              className="transition-transform duration-300 group-hover:translate-x-1"
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                ))
-              )}
+                    </Link>
+                  ))}
             </div>
           </div>
         </section>
@@ -250,13 +224,17 @@ export default function HomePage() {
                 href="/shop?best=true"
               />
 
-              <Link href='shop?best=true' className="text-xs whitespace-nowrap border-b px-2 py-1 border-slate-300 hover:bg-rose-100">View all</Link>
+              <Link
+                href="shop?best=true"
+                className="text-xs whitespace-nowrap border-b px-2 py-1 border-slate-300 hover:bg-rose-100"
+              >
+                View all
+              </Link>
             </div>
 
             <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {loading
-                ? Array.from({ length: 4 }).map(
-                  (_, index) => (
+                ? Array.from({ length: 4 }).map((_, index) => (
                     <div
                       key={index}
                       className="rounded-xl bg-white border border-slate-200 overflow-hidden"
@@ -267,14 +245,10 @@ export default function HomePage() {
                         <div className="mt-3 h-4 w-20 bg-slate-100 rounded animate-pulse" />
                       </div>
                     </div>
-                  )
-                )
-                : best.map(product => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                  />
-                ))}
+                  ))
+                : best?.map((product) => (
+                    <ProductCard key={product._id} product={product} />
+                  ))}
             </div>
           </div>
         </section>
@@ -290,13 +264,17 @@ export default function HomePage() {
                 href="/shop?new=true"
               />
 
-              <Link href='/shop' className="text-xs whitespace-nowrap border-b px-2 py-1 border-slate-300 hover:bg-rose-100">View all</Link>
+              <Link
+                href="/shop"
+                className="text-xs whitespace-nowrap border-b px-2 py-1 border-slate-300 hover:bg-rose-100"
+              >
+                View all
+              </Link>
             </div>
 
             <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {loading
-                ? Array.from({ length: 4 }).map(
-                  (_, index) => (
+                ? Array.from({ length: 4 }).map((_, index) => (
                     <div
                       key={index}
                       className="rounded-xl bg-white border border-slate-200 overflow-hidden"
@@ -307,14 +285,10 @@ export default function HomePage() {
                         <div className="mt-3 h-4 w-20 bg-slate-100 rounded animate-pulse" />
                       </div>
                     </div>
-                  )
-                )
-                : newest.map(product => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                  />
-                ))}
+                  ))
+                : newProduct?.map((product) => (
+                    <ProductCard key={product._id} product={product} />
+                  ))}
             </div>
           </div>
         </section>
@@ -339,25 +313,25 @@ export default function HomePage() {
             <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 {
-                  title: 'Quality Products',
-                  text: 'Carefully selected products with reliable quality.',
-                  icon: 'Gift'
+                  title: "Quality Products",
+                  text: "Carefully selected products with reliable quality.",
+                  icon: "Gift",
                 },
                 {
-                  title: 'Secure Shopping',
-                  text: 'A safe and reliable shopping experience for every order.',
-                  icon: 'ShieldCheck'
+                  title: "Secure Shopping",
+                  text: "A safe and reliable shopping experience for every order.",
+                  icon: "ShieldCheck",
                 },
                 {
-                  title: 'Customer First',
-                  text: 'We focus on making every customer experience better.',
-                  icon: 'Heart'
+                  title: "Customer First",
+                  text: "We focus on making every customer experience better.",
+                  icon: "Heart",
                 },
                 {
-                  title: 'Dedicated Support',
-                  text: 'Get help whenever you need assistance with your order.',
-                  icon: 'Headphones'
-                }
+                  title: "Dedicated Support",
+                  text: "Get help whenever you need assistance with your order.",
+                  icon: "Headphones",
+                },
               ].map((item, index) => {
                 const Icon = icons[item.icon] || Gift;
 
@@ -371,10 +345,7 @@ export default function HomePage() {
                     <div className="relative">
                       <div className="flex items-center justify-between">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fff0ed] text-[#c92532] transition duration-300 group-hover:scale-105 group-hover:bg-[#c92532] group-hover:text-white">
-                          <Icon
-                            size={21}
-                            strokeWidth={2}
-                          />
+                          <Icon size={21} strokeWidth={2} />
                         </div>
 
                         <span className="text-xs font-bold tracking-widest text-slate-200 transition duration-300 group-hover:text-red-100">
@@ -411,8 +382,8 @@ export default function HomePage() {
               </h2>
 
               <p className="mt-4 text-sm leading-7 text-slate-500 md:text-base">
-                See what shoppers have to say about their experience with
-                Gift Zone.
+                See what shoppers have to say about their experience with Gift
+                Zone.
               </p>
             </div>
 
@@ -445,9 +416,7 @@ export default function HomePage() {
 
                   <div className="mt-8 flex flex-wrap gap-3">
                     <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                      <p className="text-sm font-bold">
-                        Bulk Orders
-                      </p>
+                      <p className="text-sm font-bold">Bulk Orders</p>
 
                       <p className="mt-1 text-xs text-slate-400">
                         Flexible quantities
@@ -455,9 +424,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                      <p className="text-sm font-bold">
-                        Business Support
-                      </p>
+                      <p className="text-sm font-bold">Business Support</p>
 
                       <p className="mt-1 text-xs text-slate-400">
                         Dedicated assistance
@@ -470,7 +437,6 @@ export default function HomePage() {
                     className="mt-8 inline-flex w-fit items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-[#0d1a2a] transition duration-300 hover:-translate-y-0.5 hover:bg-[#f8f8f8] hover:shadow-lg"
                   >
                     Talk to our team
-
                     <ArrowRight
                       size={16}
                       className="transition-transform duration-300 group-hover:translate-x-1"
@@ -480,34 +446,25 @@ export default function HomePage() {
 
                 <div className="relative p-5 md:p-8 lg:p-10">
                   <div className="grid grid-cols-2 gap-4">
-                    {businessProducts.map(
-                      (product, index) => (
-                        <div
-                          key={product.id}
-                          className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5"
-                        >
-                          <img
-                            src={product.image}
-                            alt={
-                              product.name ||
-                              'Featured product'
-                            }
-                            loading={
-                              index < 2
-                                ? 'eager'
-                                : 'lazy'
-                            }
-                            className="h-40 w-full object-cover transition duration-500 group-hover:scale-105 md:h-48"
-                          />
+                    {businessProducts.map((product, index) => (
+                      <div
+                        key={product._id}
+                        className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5"
+                      >
+                        <img
+                          src={product.images?.[0]}
+                          alt={product.name || "Featured product"}
+                          loading={index < 2 ? "eager" : "lazy"}
+                          className="h-40 w-full object-cover transition duration-500 group-hover:scale-105 md:h-48"
+                        />
 
-                          <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent p-3 pt-10">
-                            <p className="truncate text-xs font-semibold text-white">
-                              {product.name}
-                            </p>
-                          </div>
+                        <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent p-3 pt-10">
+                          <p className="truncate text-xs font-semibold text-white">
+                            {product.name}
+                          </p>
                         </div>
-                      )
-                    )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

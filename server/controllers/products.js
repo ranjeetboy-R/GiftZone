@@ -1,25 +1,26 @@
-import mongoose from 'mongoose';
-import Product from '../models/Product.js';
-import { getProductCacheVersion, invalidateProductCache } from '../utils/productCache.js';
-import redis from '../config/redis.js';
+import mongoose from "mongoose";
+import Product from "../models/Product.js";
+import {
+  getProductCacheVersion,
+  invalidateProductCache,
+} from "../utils/productCache.js";
+import redis from "../config/redis.js";
 
 // List product without stream
 export async function listProducts(req, res) {
   try {
     const page = Math.max(Number(req.query.page) || 1, 1);
 
-    const limit = Math.min(
-      Math.max(Number(req.query.limit) || 12, 1),
-      100
-    );
+    const limit = Math.min(Math.max(Number(req.query.limit) || 12, 1), 100);
 
     const skip = (page - 1) * limit;
 
-    const filter = req.query.all === 'true'
-      ? {}
-      : {
-        active: true
-      };
+    const filter =
+      req.query.all === "true"
+        ? {}
+        : {
+            active: true,
+          };
 
     if (req.query.category) {
       filter.category = req.query.category;
@@ -32,63 +33,58 @@ export async function listProducts(req, res) {
         const searchWords = search
           .split(/\s+/)
           .filter(Boolean)
-          .map(word =>
-            word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-          );
+          .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 
-        filter.$and = searchWords.map(word => ({
+        filter.$and = searchWords.map((word) => ({
           $or: [
             {
               name: {
                 $regex: word,
-                $options: 'i'
-              }
+                $options: "i",
+              },
             },
             {
               description: {
                 $regex: word,
-                $options: 'i'
-              }
+                $options: "i",
+              },
             },
             {
               category: {
                 $regex: word,
-                $options: 'i'
-              }
-            }
-          ]
+                $options: "i",
+              },
+            },
+          ],
         }));
       }
     }
 
-    if (
-      req.query.featured === 'true' ||
-      req.query.best === 'true'
-    ) {
+    if (req.query.featured === "true" || req.query.best === "true") {
       filter.isFeatured = true;
     }
 
-    if (req.query.new === 'true') {
+    if (req.query.new === "true") {
       filter.isNewArrival = true;
     }
 
     const sortMap = {
       newest: {
-        createdAt: -1
+        createdAt: -1,
       },
-      'price-low': {
-        price: 1
+      "price-low": {
+        price: 1,
       },
-      'price-high': {
-        price: -1
+      "price-high": {
+        price: -1,
       },
       rating: {
         rating: -1,
-        reviews: -1
+        reviews: -1,
       },
       name: {
-        name: 1
-      }
+        name: 1,
+      },
     };
 
     const sort = sortMap[req.query.sort] || sortMap.newest;
@@ -100,7 +96,7 @@ export async function listProducts(req, res) {
       filter,
       sort,
       page,
-      limit
+      limit,
     })}`;
 
     // Get from Redis
@@ -113,14 +109,14 @@ export async function listProducts(req, res) {
     const [products, total] = await Promise.all([
       Product.find(filter)
         .select(
-          'name slug price sizes description compareAtPrice images category rating reviews stock isFeatured isNewArrival active'
+          "name slug price sizes description compareAtPrice images category rating reviews stock isFeatured isNewArrival active",
         )
         .sort(sort)
         .skip(skip)
         .limit(limit)
         .lean(),
 
-      Product.countDocuments(filter)
+      Product.countDocuments(filter),
     ]);
 
     const result = {
@@ -129,23 +125,83 @@ export async function listProducts(req, res) {
         page,
         limit,
         total,
-        pages: Math.max(Math.ceil(total / limit), 1)
-      }
+        pages: Math.max(Math.ceil(total / limit), 1),
+      },
     };
 
     // Save in Redis for 1 hour
-    await redis.set(
-      cacheKey,
-      result,
-      {
-        ex: 60 * 60
-      }
-    );
+    await redis.set(cacheKey, result, {
+      ex: 60 * 60,
+    });
 
     return res.status(200).json(result);
   } catch (error) {
     res.status(500).json({
-      message: error.message
+      message: error.message,
+    });
+  }
+}
+
+// List best product without stream
+export async function getBestProducts(req, res) {
+  try {
+    const cacheKey = "products:best:24";
+
+    const cachedData = await redis.get(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json({
+        products: cachedData,
+      });
+    }
+
+    const products = await Product.aggregate([
+      { $match: { isFeatured: true } },
+      { $sample: { size: 24 } },
+    ]);
+
+    await redis.set(cacheKey, products, {
+      ex: 60 * 60,
+    });
+
+    return res.status(200).json({
+      products,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+}
+
+// List new product without stream
+export async function getNewProducts(req, res) {
+  try {
+    const cacheKey = "products:new:24";
+
+    const cachedProducts = await redis.get(cacheKey);
+
+    if (cachedProducts) {
+      return res.status(200).json({
+        products: cachedProducts,
+      });
+    }
+
+    const products = await Product.aggregate([
+      { $match: { isNewArrival: true } },
+      { $sample: { size: 24 } },
+    ]);
+
+    await redis.set(cacheKey, products, {
+      ex: 60 * 60,
+    });
+
+    return res.status(200).json({
+      products,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
     });
   }
 }
@@ -153,23 +209,18 @@ export async function listProducts(req, res) {
 // List Product with stream
 export async function listProductsWithStream(req, res) {
   try {
-    const page = Math.max(
-      Number(req.query.page) || 1,
-      1
-    );
+    const page = Math.max(Number(req.query.page) || 1, 1);
 
-    const limit = Math.min(
-      Math.max(Number(req.query.limit) || 12, 1),
-      100
-    );
+    const limit = Math.min(Math.max(Number(req.query.limit) || 12, 1), 100);
 
     const skip = (page - 1) * limit;
 
-    const filter = req.query.all === 'true'
-      ? {}
-      : {
-        active: true
-      };
+    const filter =
+      req.query.all === "true"
+        ? {}
+        : {
+            active: true,
+          };
 
     if (req.query.category) {
       filter.category = req.query.category;
@@ -182,68 +233,61 @@ export async function listProductsWithStream(req, res) {
         const searchWords = search
           .split(/\s+/)
           .filter(Boolean)
-          .map(word =>
-            word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-          );
+          .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 
-        filter.$and = searchWords.map(word => ({
+        filter.$and = searchWords.map((word) => ({
           $or: [
             {
               name: {
                 $regex: word,
-                $options: 'i'
-              }
+                $options: "i",
+              },
             },
             {
               description: {
                 $regex: word,
-                $options: 'i'
-              }
+                $options: "i",
+              },
             },
             {
               category: {
                 $regex: word,
-                $options: 'i'
-              }
-            }
-          ]
+                $options: "i",
+              },
+            },
+          ],
         }));
       }
     }
 
-    if (
-      req.query.featured === 'true' ||
-      req.query.best === 'true'
-    ) {
+    if (req.query.featured === "true" || req.query.best === "true") {
       filter.isFeatured = true;
     }
 
-    if (req.query.new === 'true') {
+    if (req.query.new === "true") {
       filter.isNewArrival = true;
     }
 
     const sortMap = {
       newest: {
-        createdAt: -1
+        createdAt: -1,
       },
-      'price-low': {
-        price: 1
+      "price-low": {
+        price: 1,
       },
-      'price-high': {
-        price: -1
+      "price-high": {
+        price: -1,
       },
       rating: {
         rating: -1,
-        reviews: -1
+        reviews: -1,
       },
       name: {
-        name: 1
-      }
+        name: 1,
+      },
     };
 
-    const sort =
-      sortMap[req.query.sort] ||
-      sortMap.newest;
+    const sort = sortMap[req.query.sort] || sortMap.newest;
 
     // Redis cache key
     const version = await getProductCacheVersion();
@@ -252,7 +296,7 @@ export async function listProductsWithStream(req, res) {
       filter,
       sort,
       page,
-      limit
+      limit,
     })}`;
 
     // Get from Redis
@@ -260,20 +304,11 @@ export async function listProductsWithStream(req, res) {
 
     res.status(200);
 
-    res.setHeader(
-      'Content-Type',
-      'application/x-ndjson; charset=utf-8'
-    );
+    res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
 
-    res.setHeader(
-      'Cache-Control',
-      'no-cache, no-transform'
-    );
+    res.setHeader("Cache-Control", "no-cache, no-transform");
 
-    res.setHeader(
-      'Transfer-Encoding',
-      'chunked'
-    );
+    res.setHeader("Transfer-Encoding", "chunked");
 
     res.flushHeaders?.();
 
@@ -281,9 +316,9 @@ export async function listProductsWithStream(req, res) {
     if (cachedData) {
       res.write(
         JSON.stringify({
-          type: 'meta',
-          pagination: cachedData.pagination
-        }) + '\n'
+          type: "meta",
+          pagination: cachedData.pagination,
+        }) + "\n",
       );
 
       let batch = [];
@@ -294,44 +329,40 @@ export async function listProductsWithStream(req, res) {
         if (batch.length === 5) {
           res.write(
             JSON.stringify({
-              type: 'products',
-              products: batch
-            }) + '\n'
+              type: "products",
+              products: batch,
+            }) + "\n",
           );
 
           batch = [];
 
-          await new Promise(resolve =>
-            setImmediate(resolve)
-          );
+          await new Promise((resolve) => setImmediate(resolve));
         }
       }
 
       if (batch.length > 0) {
         res.write(
           JSON.stringify({
-            type: 'products',
-            products: batch
-          }) + '\n'
+            type: "products",
+            products: batch,
+          }) + "\n",
         );
       }
 
       res.write(
         JSON.stringify({
-          type: 'done'
-        }) + '\n'
+          type: "done",
+        }) + "\n",
       );
 
       return res.end();
     }
 
-    const total = await Product.countDocuments(
-      filter
-    );
+    const total = await Product.countDocuments(filter);
 
     const cursor = Product.find(filter)
       .select(
-        'name slug price sizes description compareAtPrice images category rating reviews stock isFeatured isNewArrival active'
+        "name slug price sizes description compareAtPrice images category rating reviews stock isFeatured isNewArrival active",
       )
       .sort(sort)
       .skip(skip)
@@ -343,17 +374,14 @@ export async function listProductsWithStream(req, res) {
 
     res.write(
       JSON.stringify({
-        type: 'meta',
+        type: "meta",
         pagination: {
           page,
           limit,
           total,
-          pages: Math.max(
-            Math.ceil(total / limit),
-            1
-          )
-        }
-      }) + '\n'
+          pages: Math.max(Math.ceil(total / limit), 1),
+        },
+      }) + "\n",
     );
 
     let batch = [];
@@ -366,25 +394,23 @@ export async function listProductsWithStream(req, res) {
       if (batch.length === 5) {
         res.write(
           JSON.stringify({
-            type: 'products',
-            products: batch
-          }) + '\n'
+            type: "products",
+            products: batch,
+          }) + "\n",
         );
 
         batch = [];
 
-        await new Promise(resolve =>
-          setImmediate(resolve)
-        );
+        await new Promise((resolve) => setImmediate(resolve));
       }
     }
 
     if (batch.length > 0) {
       res.write(
         JSON.stringify({
-          type: 'products',
-          products: batch
-        }) + '\n'
+          type: "products",
+          products: batch,
+        }) + "\n",
       );
     }
 
@@ -394,33 +420,26 @@ export async function listProductsWithStream(req, res) {
         page,
         limit,
         total,
-        pages: Math.max(
-          Math.ceil(total / limit),
-          1
-        )
-      }
+        pages: Math.max(Math.ceil(total / limit), 1),
+      },
     };
 
     // Save in Redis for 1 hour
-    await redis.set(
-      cacheKey,
-      result,
-      {
-        ex: 60 * 60
-      }
-    );
+    await redis.set(cacheKey, result, {
+      ex: 60 * 60,
+    });
 
     res.write(
       JSON.stringify({
-        type: 'done'
-      }) + '\n'
+        type: "done",
+      }) + "\n",
     );
 
     res.end();
   } catch (error) {
     if (!res.headersSent) {
       res.status(500).json({
-        message: error.message
+        message: error.message,
       });
     } else {
       res.end();
@@ -430,45 +449,39 @@ export async function listProductsWithStream(req, res) {
 
 export async function getRelatedProducts(req, res) {
   try {
-    const limit = Math.min(
-      Math.max(Number(req.query.limit) || 4, 1),
-      12
-    );
+    const limit = Math.min(Math.max(Number(req.query.limit) || 4, 1), 12);
 
     const currentProductId = req.query.exclude;
 
     const filter = {
       active: true,
-      category: req.params.category
+      category: req.params.category,
     };
 
-    if (
-      currentProductId &&
-      mongoose.isValidObjectId(currentProductId)
-    ) {
+    if (currentProductId && mongoose.isValidObjectId(currentProductId)) {
       filter._id = {
-        $ne: currentProductId
+        $ne: currentProductId,
       };
     }
 
     const products = await Product.find(filter)
       .select(
-        'name slug price compareAtPrice images category rating reviews stock isFeatured isNewArrival'
+        "name slug price compareAtPrice images category rating reviews stock isFeatured isNewArrival",
       )
       .sort({
         isFeatured: -1,
         rating: -1,
-        createdAt: -1
+        createdAt: -1,
       })
       .limit(limit)
       .lean();
 
     res.json({
-      products
+      products,
     });
   } catch (error) {
     res.status(500).json({
-      message: error.message
+      message: error.message,
     });
   }
 }
@@ -477,21 +490,21 @@ export async function getProduct(req, res) {
   try {
     const product = await Product.findOne({
       slug: req.params.slug,
-      active: true
+      active: true,
     }).lean();
 
     if (!product) {
       return res.status(404).json({
-        message: 'Product not found'
+        message: "Product not found",
       });
     }
 
     res.json({
-      product
+      product,
     });
   } catch (error) {
     res.status(500).json({
-      message: error.message
+      message: error.message,
     });
   }
 }
@@ -499,30 +512,30 @@ export async function getProduct(req, res) {
 export async function createProduct(req, res) {
   try {
     const payload = {
-      ...req.body
+      ...req.body,
     };
 
     if (!payload.name) {
       return res.status(400).json({
-        message: 'Product name is required'
+        message: "Product name is required",
       });
     }
 
     if (!payload.slug) {
       return res.status(400).json({
-        message: 'Product slug is required'
+        message: "Product slug is required",
       });
     }
 
     if (!payload.category) {
       return res.status(400).json({
-        message: 'Product category is required'
+        message: "Product category is required",
       });
     }
 
     if (Number(payload.price) < 0) {
       return res.status(400).json({
-        message: 'Product price cannot be negative'
+        message: "Product price cannot be negative",
       });
     }
 
@@ -537,9 +550,7 @@ export async function createProduct(req, res) {
 
     if (payload.sizes !== undefined) {
       payload.sizes = Array.isArray(payload.sizes)
-        ? payload.sizes
-          .map((size) => String(size).trim())
-          .filter(Boolean)
+        ? payload.sizes.map((size) => String(size).trim()).filter(Boolean)
         : [];
     }
 
@@ -547,15 +558,13 @@ export async function createProduct(req, res) {
     await invalidateProductCache();
 
     res.status(201).json({
-      message: 'Product created successfully',
-      product
+      message: "Product created successfully",
+      product,
     });
   } catch (error) {
     res.status(400).json({
       message:
-        error.code === 11000
-          ? 'Product slug already exists'
-          : error.message
+        error.code === 11000 ? "Product slug already exists" : error.message,
     });
   }
 }
@@ -563,7 +572,7 @@ export async function createProduct(req, res) {
 export async function updateProduct(req, res) {
   try {
     const payload = {
-      ...req.body
+      ...req.body,
     };
 
     delete payload._id;
@@ -592,39 +601,30 @@ export async function updateProduct(req, res) {
 
     if (payload.sizes !== undefined) {
       payload.sizes = Array.isArray(payload.sizes)
-        ? payload.sizes
-          .map((size) => String(size).trim())
-          .filter(Boolean)
+        ? payload.sizes.map((size) => String(size).trim()).filter(Boolean)
         : [];
     }
 
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      payload,
-      {
-        returnDocument: 'after',
-        runValidators: true
-      }
-    );
-
+    const product = await Product.findByIdAndUpdate(req.params.id, payload, {
+      returnDocument: "after",
+      runValidators: true,
+    });
 
     if (!product) {
       return res.status(404).json({
-        message: 'Product not found'
+        message: "Product not found",
       });
     }
 
     await invalidateProductCache();
     res.json({
-      message: 'Product updated successfully',
-      product
+      message: "Product updated successfully",
+      product,
     });
   } catch (error) {
     res.status(400).json({
       message:
-        error.code === 11000
-          ? 'Product slug already exists'
-          : error.message
+        error.code === 11000 ? "Product slug already exists" : error.message,
     });
   }
 }
@@ -636,7 +636,7 @@ export async function deleteProduct(req, res) {
     if (!id) {
       return res.status(404).json({
         success: false,
-        message: 'Product id not found'
+        message: "Product id not found",
       });
     }
 
@@ -645,48 +645,45 @@ export async function deleteProduct(req, res) {
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: 'Product not found'
+        message: "Product not found",
       });
     }
 
     await invalidateProductCache();
 
     res.json({
-      success: true
+      success: true,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 }
 
 function formatCategoryName(slug) {
   const names = {
-    'electronics-gadgets': 'Electronics & Gadgets',
-    'mobile-accessories': 'Mobile Accessories',
-    'home-living': 'Home & Living',
-    'fashion-accessories': 'Fashion & Accessories',
-    'beauty-personal-care': 'Beauty & Personal Care',
-    'kitchen-dining': 'Kitchen & Dining',
-    'personalized-gifts': 'Personalized Gifts',
-    'birthday-gifts': 'Birthday Gifts',
-    'anniversary-gifts': 'Anniversary Gifts',
-    'wedding-gifts': 'Wedding Gifts',
-    'corporate-gifts': 'Corporate Gifts',
-    'festival-gifts': 'Festival Gifts'
+    "electronics-gadgets": "Electronics & Gadgets",
+    "mobile-accessories": "Mobile Accessories",
+    "home-living": "Home & Living",
+    "fashion-accessories": "Fashion & Accessories",
+    "beauty-personal-care": "Beauty & Personal Care",
+    "kitchen-dining": "Kitchen & Dining",
+    "personalized-gifts": "Personalized Gifts",
+    "birthday-gifts": "Birthday Gifts",
+    "anniversary-gifts": "Anniversary Gifts",
+    "wedding-gifts": "Wedding Gifts",
+    "corporate-gifts": "Corporate Gifts",
+    "festival-gifts": "Festival Gifts",
   };
 
   return (
     names[slug] ||
     slug
-      .split('-')
-      .map(
-        word =>
-          word.charAt(0).toUpperCase() + word.slice(1)
-      )
-      .join(' ')
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
   );
 }
 
@@ -695,15 +692,12 @@ export async function getCategories(req, res) {
     const hasLimit = req.query.limit !== undefined;
 
     const limit = hasLimit
-      ? Math.min(
-        Math.max(Number(req.query.limit) || 1, 1),
-        100
-      )
+      ? Math.min(Math.max(Number(req.query.limit) || 1, 1), 100)
       : null;
 
     const version = await getProductCacheVersion();
 
-    const cacheKey = `categories:v${version}:${limit ?? 'all'}`;
+    const cacheKey = `categories:v${version}:${limit ?? "all"}`;
 
     const cachedData = await redis.get(cacheKey);
 
@@ -717,53 +711,49 @@ export async function getCategories(req, res) {
           active: true,
           category: {
             $exists: true,
-            $nin: ['', null]
-          }
-        }
+            $nin: ["", null],
+          },
+        },
       },
       {
         $group: {
-          _id: '$category',
+          _id: "$category",
           count: {
-            $sum: 1
-          }
-        }
+            $sum: 1,
+          },
+        },
       },
       {
         $sort: {
-          _id: 1
-        }
-      }
+          _id: 1,
+        },
+      },
     ];
 
     if (limit !== null) {
       pipeline.push({
-        $limit: limit
+        $limit: limit,
       });
     }
 
     const categories = await Product.aggregate(pipeline);
 
     const result = {
-      categories: categories.map(item => ({
+      categories: categories.map((item) => ({
         slug: item._id,
         name: formatCategoryName(item._id),
-        count: item.count
-      }))
+        count: item.count,
+      })),
     };
 
-    await redis.set(
-      cacheKey,
-      result,
-      {
-        ex: 60 * 60 * 6
-      }
-    );
+    await redis.set(cacheKey, result, {
+      ex: 60 * 60 * 6,
+    });
 
     return res.status(200).json(result);
   } catch (error) {
     res.status(500).json({
-      message: error.message
+      message: error.message,
     });
   }
 }
