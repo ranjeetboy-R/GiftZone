@@ -9,10 +9,48 @@ import LoadingGrid from '@/components/LoadingGrid';
 import EmptyState from '@/components/EmptyState';
 import ErrorState from '@/components/ErrorState';
 import { useCart } from '@/context/CartContext';
-import { apiFetch, apiFetchStream } from '@/lib/api';
+import {
+  apiFetch,
+  getCachedApiData
+} from '@/lib/api';
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 
-const PAGE_SIZE = 40;
+const PAGE_SIZE = 30;
+
+const getCatalogPath = (page, searchParams) => {
+  const params = new URLSearchParams();
+
+  params.set('page', String(page));
+  params.set('limit', String(PAGE_SIZE));
+
+  const currentSearch = searchParams.get('search') || '';
+  const currentCategory = searchParams.get('category') || '';
+  const currentSort =
+    searchParams.get('sort') ||
+    (searchParams.get('best') === 'true' ? 'rating' : 'newest');
+
+  if (currentSearch.trim()) {
+    params.set('search', currentSearch.trim());
+  }
+
+  if (currentCategory) {
+    params.set('category', currentCategory);
+  }
+
+  if (searchParams.get('new') === 'true') {
+    params.set('new', 'true');
+  }
+
+  if (searchParams.get('best') === 'true') {
+    params.set('best', 'true');
+  }
+
+  if (currentSort && currentSort !== 'newest') {
+    params.set('sort', currentSort);
+  }
+
+  return `/api/products?${params.toString()}`;
+};
 
 const SORT_OPTIONS = [
   {
@@ -76,19 +114,31 @@ export default function ShopPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [catalog, setCatalog] = useState([]);
+  const [page, setPage] = useState(
+    () => Math.max(Number(searchParams.get('page')) || 1, 1)
+  );
+  const [initialCatalog] = useState(
+    () => getCachedApiData(getCatalogPath(page, searchParams))
+  );
+  const [catalog, setCatalog] = useState(
+    () => initialCatalog?.products || []
+  );
   const [categories, setCategories] = useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [pages, setPages] = useState(
+    () => Math.max(Number(initialCatalog?.pagination?.pages) || 1, 1)
+  );
+  const [totalProducts, setTotalProducts] = useState(
+    () => Number(initialCatalog?.pagination?.total) || 0
+  );
+  const [loading, setLoading] = useState(
+    () => initialCatalog === undefined
+  );
   const [error, setError] = useState('');
 
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('allCategories');
   const [sort, setSort] = useState('newest');
-
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [totalProducts, setTotalProducts] = useState(0);
 
   const [wishlistOnly, setWishlistOnly] = useState(false);
   const [wishlistIds, setWishlistIds] = useState(() => new Set());
@@ -131,7 +181,18 @@ export default function ShopPage() {
     const loadCategories = async () => {
       try {
         const data = await apiFetch(
-          '/api/products/categories'
+          '/api/products/categories',
+          {
+            onUpdate: freshData => {
+              if (!cancelled) {
+                setCategories(
+                  Array.isArray(freshData?.categories)
+                    ? freshData.categories
+                    : []
+                );
+              }
+            }
+          }
         );
 
         if (!cancelled) {
@@ -199,70 +260,42 @@ export default function ShopPage() {
     const controller = new AbortController();
 
     const loadProducts = async () => {
-      const params = new URLSearchParams();
+      const path = getCatalogPath(page, searchParams);
+      const cachedData = getCachedApiData(path);
 
-      params.set('page', String(page));
-      params.set('limit', String(PAGE_SIZE));
-
-      const currentSearch =
-        searchParams.get('search') || '';
-
-      const currentCategory =
-        searchParams.get('category') || '';
-
-      const currentSort =
-        searchParams.get('sort') ||
-        (
-          searchParams.get('best') === 'true'
-            ? 'rating'
-            : 'newest'
-        );
-
-      const isNew =
-        searchParams.get('new') === 'true';
-
-      const isBest =
-        searchParams.get('best') === 'true';
-
-      if (currentSearch.trim()) {
-        params.set(
-          'search',
-          currentSearch.trim()
-        );
-      }
-
-      if (currentCategory) {
-        params.set(
-          'category',
-          currentCategory
-        );
-      }
-
-      if (isNew) {
-        params.set('new', 'true');
-      }
-
-      if (isBest) {
-        params.set('best', 'true');
-      }
-
-      if (
-        currentSort &&
-        currentSort !== 'newest'
-      ) {
-        params.set(
-          'sort',
-          currentSort
-        );
-      }
-
-      setLoading(true);
+      setLoading(cachedData === undefined);
       setError('');
-      setCatalog([]);
+
+      if (cachedData === undefined) {
+        setCatalog([]);
+      } else {
+        const cachedPagination = cachedData.pagination || {};
+        setCatalog(
+          Array.isArray(cachedData.products)
+            ? cachedData.products
+            : []
+        );
+        setTotalProducts(Number(cachedPagination.total) || 0);
+        setPages(Math.max(Number(cachedPagination.pages) || 1, 1));
+      }
 
       try {
         const data = await apiFetch(
-          `/api/products?${params.toString()}`
+          path,
+          {
+            onUpdate: freshData => {
+              if (!cancelled) {
+                const freshPagination = freshData?.pagination || {};
+                setCatalog(
+                  Array.isArray(freshData?.products)
+                    ? freshData.products
+                    : []
+                );
+                setTotalProducts(Number(freshPagination.total) || 0);
+                setPages(Math.max(Number(freshPagination.pages) || 1, 1));
+              }
+            }
+          }
         );
 
         if (cancelled) {

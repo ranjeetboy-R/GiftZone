@@ -12,7 +12,7 @@ const steps = ['confirmed', 'processing', 'shipped', 'delivered'];
 export default function OrderDetailsPage({ params }) {
   const [id, setId] = useState("");
   const [loading, setLoading] = useState(false);
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, userId } = useAuth();
 
   useEffect(() => {
     const getId = async () => {
@@ -22,27 +22,69 @@ export default function OrderDetailsPage({ params }) {
     getId();
   }, [])  
 
-  const [order, setOrder] = useState(null);
+  const [orderState, setOrderState] = useState({
+    id: null,
+    userId: null,
+    order: null
+  });
+  const order =
+    orderState.id === id && orderState.userId === userId
+      ? orderState.order
+      : null;
 
   useEffect(() => {
-    if (!id) { return; }
+    let cancelled = false;
+
+    if (!id || !isLoaded || !userId) {
+      setLoading(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
     const getOrder = async () => {
       try {
         setLoading(true);
         const token = await getToken();
-        const data = await apiFetch(`/api/orders/mine/${id}`, { token });
-        setOrder(data.order || null);
+        const path = `/api/orders/mine/${id}`;
+        const data = await apiFetch(path, {
+          token,
+          onUpdate: freshData => {
+            if (!cancelled) {
+              setOrderState({
+                id,
+                userId,
+                order: freshData.order || null
+              });
+            }
+          }
+        });
+        if (!cancelled) {
+          setOrderState({
+            id,
+            userId,
+            order: data.order || null
+          });
+        }
       }
       catch (error) {
         console.error('Failed to fetch order:', error);
-        setOrder(null);
+        if (!cancelled) {
+          setOrderState({ id, userId, order: null });
+        }
       }
       finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
     getOrder();
-  }, [id]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [getToken, id, isLoaded, userId]);
 
   if (!order)
     return <>

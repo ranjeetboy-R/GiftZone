@@ -1,233 +1,251 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-// 1 hour
-const CACHE_TTL = 60 * 60 * 1000;
+const CACHE_STALE_TIME = 5 * 60 * 1000;
+const MAX_CACHE_ENTRIES = 100;
+const apiCache = new Map();
 
-const productCache = new Map();
-const productListCache = new Map();
+function getRequestHeaders(options, token) {
+  const headers = {
+    ...(typeof FormData !== 'undefined' && options.body instanceof FormData
+      ? {}
+      : { 'Content-Type': 'application/json' }),
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
 
-function isProductDetailsRequest(path, method) {
+  return headers;
+}
+
+function getAuthorization(headers) {
+  return new Headers(headers).get('authorization') || '';
+}
+
+function getCacheKey(path, headers) {
+  const normalizedHeaders = Array.from(
+    new Headers(headers).entries()
+  ).sort(([left], [right]) => left.localeCompare(right));
+
+  return `${API_URL}${path}|${JSON.stringify(normalizedHeaders)}`;
+}
+
+function isCacheableRequest(method, path, token, headers, signal) {
   return (
     method === 'GET' &&
-    /^\/api\/products\/[^/?]+$/.test(path) &&
-    path !== '/api/products/categories'
+    !signal &&
+    (
+      path === '/api/products' ||
+      path.startsWith('/api/products?') ||
+      path.startsWith('/api/products/') ||
+      Boolean(token || getAuthorization(headers))
+    )
   );
 }
 
-function isProductListRequest(path, method) {
-  return (
-    method === 'GET' &&
-    path.startsWith('/api/products?')
-  );
+function storeCacheEntry(key, entry) {
+  apiCache.delete(key);
+  apiCache.set(key, entry);
+
+  while (apiCache.size > MAX_CACHE_ENTRIES) {
+    const oldestAvailable = Array.from(apiCache.entries())
+      .find(([, cachedEntry]) => !cachedEntry.promise);
+
+    if (!oldestAvailable) {
+      break;
+    }
+
+    apiCache.delete(oldestAvailable[0]);
+  }
 }
 
-function isCategoryRequest(path, method) {
-  return (
-    method === 'GET' &&
-    path === '/api/products/categories'
+function invalidateRelatedCache(path, token, headers) {
+  const family = ['/api/products', '/api/orders', '/api/users']
+    .find(prefix => path === prefix || path.startsWith(`${prefix}/`));
+
+  if (!family) {
+    return;
+  }
+
+  const authScope = token
+    ? `Bearer ${token}`
+    : getAuthorization(headers);
+
+  for (const [key, entry] of apiCache) {
+    if (
+      (
+        entry.path === family ||
+        entry.path.startsWith(`${family}/`) ||
+        entry.path.startsWith(`${family}?`)
+      ) &&
+      (
+        family === '/api/products' ||
+        !authScope ||
+        entry.authScope === authScope
+      )
+    ) {
+      apiCache.delete(key);
+    }
+  }
+}
+
+async function executeRequest(path, options, token, method, key, entry) {
+  const headers = getRequestHeaders(options, token);
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers,
+    credentials: 'include',
+    cache: 'no-store'
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Request failed');
+  }
+
+  if (method !== 'GET') {
+    invalidateRelatedCache(path, token, headers);
+  }
+
+  if (entry && apiCache.get(key) === entry) {
+    entry.data = data;
+    entry.updatedAt = Date.now();
+    entry.promise = null;
+
+    for (const listener of entry.listeners) {
+      listener(data);
+    }
+
+    entry.listeners.clear();
+  }
+
+  return data;
+}
+
+function revalidate(path, options, token, method, key, entry) {
+  if (entry.promise) {
+    return;
+  }
+
+  const request = executeRequest(
+    path,
+    options,
+    token,
+    method,
+    key,
+    entry
   );
+
+  entry.promise = request;
+  request.catch(() => {
+    if (apiCache.get(key) === entry) {
+      entry.promise = null;
+      entry.listeners.clear();
+    }
+  });
+}
+
+export function getCachedApiData(path, options = {}) {
+  const { token, ...rest } = options;
+  const headers = getRequestHeaders(rest, token);
+
+  if (
+    !isCacheableRequest(
+      (rest.method || 'GET').toUpperCase(),
+      path,
+      token,
+      headers,
+      rest.signal
+    )
+  ) {
+    return undefined;
+  }
+
+  return apiCache.get(getCacheKey(path, headers))?.data;
 }
 
 export async function apiFetch(path, options = {}) {
-  const { token, ...rest } = options;
-
+  const { token, onUpdate, ...rest } = options;
   const method = (rest.method || 'GET').toUpperCase();
-
-  const shouldCacheProduct = isProductDetailsRequest(
+  const headers = getRequestHeaders(rest, token);
+  const canCache = isCacheableRequest(
+    method,
     path,
-    method
+    token,
+    headers,
+    rest.signal
   );
 
-  const shouldCacheProductList = isProductListRequest(
-    path,
-    method
-  );
-
-  const shouldCacheCategories = isCategoryRequest(
-    path,
-    method
-  );
-
-  const shouldCache =
-    shouldCacheProduct ||
-    shouldCacheProductList ||
-    shouldCacheCategories;
-
-  const cacheKey = `${API_URL}${path}`;
-
-  /*
-   * Product details cache
-   */
-  if (shouldCacheProduct) {
-    const cached = productCache.get(cacheKey);
-
-    if (cached && cached.expiresAt > Date.now()) {
-      return cached.data;
-    }
-
-    if (cached?.promise) {
-      return cached.promise;
-    }
+  if (!canCache) {
+    return executeRequest(path, rest, token, method);
   }
 
-  /*
-   * Product list cache
-   */
-  if (shouldCacheProductList) {
-    const cached = productListCache.get(cacheKey);
+  const key = getCacheKey(path, headers);
+  const cached = apiCache.get(key);
 
-    if (cached && cached.expiresAt > Date.now()) {
-      return cached.data;
-    }
+  if (cached?.data !== undefined) {
+    const isStale = Date.now() - cached.updatedAt >= CACHE_STALE_TIME;
 
-    if (cached?.promise) {
-      return cached.promise;
-    }
-  }
-
-  /*
-   * Category cache
-   */
-  if (shouldCacheCategories) {
-    const cached = productListCache.get(cacheKey);
-
-    if (cached && cached.expiresAt > Date.now()) {
-      return cached.data;
-    }
-
-    if (cached?.promise) {
-      return cached.promise;
-    }
-  }
-
-  const headers = {
-    ...(rest.body instanceof FormData
-      ? {}
-      : {
-        'Content-Type': 'application/json'
-      }),
-
-    ...(rest.headers || {}),
-
-    ...(token
-      ? {
-        Authorization: `Bearer ${token}`
+    if (isStale) {
+      if (typeof onUpdate === 'function') {
+        cached.listeners.add(onUpdate);
       }
-      : {})
+
+      revalidate(path, rest, token, method, key, cached);
+    }
+
+    storeCacheEntry(key, cached);
+    return cached.data;
+  }
+
+  if (cached?.promise) {
+    return cached.promise;
+  }
+
+  const entry = {
+    path,
+    authScope: token
+      ? `Bearer ${token}`
+      : getAuthorization(headers),
+    data: undefined,
+    updatedAt: 0,
+    promise: null,
+    listeners: new Set()
   };
 
-  const request = (async () => {
-    const response = await fetch(
-      `${API_URL}${path}`,
-      {
-        ...rest,
-        headers,
-        credentials: 'include',
+  storeCacheEntry(key, entry);
+  const request = executeRequest(
+    path,
+    rest,
+    token,
+    method,
+    key,
+    entry
+  );
 
-        // Browser/network cache ko disable rakho.
-        // Hamara custom cache use hoga.
-        cache: 'no-store'
-      }
-    );
-
-    const data = await response
-      .json()
-      .catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || 'Request failed'
-      );
+  entry.promise = request;
+  request.catch(() => {
+    if (apiCache.get(key) === entry) {
+      apiCache.delete(key);
     }
-
-    /*
-     * Save product details
-     */
-    if (shouldCacheProduct) {
-      productCache.set(cacheKey, {
-        data,
-        expiresAt: Date.now() + CACHE_TTL
-      });
-    }
-
-    /*
-     * Save product lists and categories
-     */
-    if (
-      shouldCacheProductList ||
-      shouldCacheCategories
-    ) {
-      productListCache.set(cacheKey, {
-        data,
-        expiresAt: Date.now() + CACHE_TTL
-      });
-    }
-
-    /*
-     * Product mutation ke baad cache invalidate
-     */
-    if (
-      method !== 'GET' &&
-      path.startsWith('/api/products/')
-    ) {
-      productCache.clear();
-      productListCache.clear();
-    }
-
-    return data;
-  })();
-
-  /*
-   * Store pending promise
-   * so duplicate requests don't happen
-   */
-  if (shouldCacheProduct) {
-    productCache.set(cacheKey, {
-      promise: request
-    });
-
-    request.catch(() => {
-      productCache.delete(cacheKey);
-    });
-  }
-
-  if (
-    shouldCacheProductList ||
-    shouldCacheCategories
-  ) {
-    productListCache.set(cacheKey, {
-      promise: request
-    });
-
-    request.catch(() => {
-      productListCache.delete(cacheKey);
-    });
-  }
+  });
 
   return request;
 }
 
 export { API_URL };
 
-// Stream api 
 export async function apiFetchStream(path, { signal, onMeta, onProducts } = {}) {
-
   const response = await fetch(`${API_URL}${path}`, {
     signal,
     cache: 'no-store'
-  }
-  );
+  });
 
   if (!response.ok) {
-    throw new Error(
-      `Request failed with status ${response.status}`
-    );
+    throw new Error(`Request failed with status ${response.status}`);
   }
 
   if (!response.body) {
-    throw new Error(
-      'Streaming is not supported by this response.'
-    );
+    throw new Error('Streaming is not supported by this response.');
   }
 
   const reader = response.body.getReader();
@@ -241,13 +259,8 @@ export async function apiFetchStream(path, { signal, onMeta, onProducts } = {}) 
       break;
     }
 
-    buffer += decoder.decode(value, {
-      stream: true
-    }
-    );
-
+    buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split('\n');
-
     buffer = lines.pop() || '';
 
     for (const line of lines) {

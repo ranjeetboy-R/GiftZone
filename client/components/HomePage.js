@@ -19,7 +19,7 @@ import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import SectionHeading from "@/components/SectionHeading";
 import { useCart } from "@/context/CartContext";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, getCachedApiData } from "@/lib/api";
 
 import { hero } from "@/public/data/site.json";
 import Testimonials from "./Testimonials";
@@ -31,22 +31,42 @@ const icons = {
   Headphones,
 };
 
+const categoryPath = "/api/products/categories?limit=8";
+
 export default function HomePage() {
   const { items } = useCart();
 
-  const [best, setBest] = useState([]);
-  const [newProduct, setNewProduct] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [best, setBest] = useState(
+    () => getCachedApiData("/api/products/best")?.products || []
+  );
+  const [newProduct, setNewProduct] = useState(
+    () => getCachedApiData("/api/products/new")?.products || []
+  );
+  const [categories, setCategories] = useState(
+    () => getCachedApiData(categoryPath)?.categories || []
+  );
+  const [categoryLoading, setCategoryLoading] = useState(
+    () => getCachedApiData(categoryPath) === undefined
+  );
+  const [bestLoading, setBestLoading] = useState(
+    () => getCachedApiData("/api/products/best") === undefined
+  );
+  const [newLoading, setNewLoading] = useState(
+    () => getCachedApiData("/api/products/new") === undefined
+  );
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadHomepageData() {
       try {
-        setLoading(true);
-
-        const categoryData = await apiFetch("/api/products/categories?limit=8");
+        const categoryData = await apiFetch(categoryPath, {
+          onUpdate: data => {
+            if (!cancelled) {
+              setCategories(data.categories || []);
+            }
+          }
+        });
 
         if (cancelled) {
           return;
@@ -59,7 +79,7 @@ export default function HomePage() {
         }
       } finally {
         if (!cancelled) {
-          setLoading(false);
+          setCategoryLoading(false);
         }
       }
     }
@@ -72,20 +92,35 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const loadProduct = async () => {
-      try {
-        const [bestItem, newItem] = await Promise.all([
-          apiFetch("/api/products/best"),
-          apiFetch("/api/products/new"),
-        ]);
+    let cancelled = false;
 
-        setBest(bestItem?.products || []);
-        setNewProduct(newItem?.products || []);
+    const loadProductList = async (path, setProducts, setListLoading) => {
+      try {
+        const data = await apiFetch(path, {
+          onUpdate: freshData => {
+            if (!cancelled) {
+              setProducts(freshData?.products || []);
+            }
+          }
+        });
+
+        if (!cancelled) {
+          setProducts(data?.products || []);
+        }
       } catch (error) {
+      } finally {
+        if (!cancelled) {
+          setListLoading(false);
+        }
       }
     };
 
-    loadProduct();
+    loadProductList("/api/products/best", setBest, setBestLoading);
+    loadProductList("/api/products/new", setNewProduct, setNewLoading);
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -153,7 +188,7 @@ export default function HomePage() {
             />
 
             <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {loading
+              {categoryLoading
                 ? Array.from({ length: 6 }).map((_, index) => (
                     <div
                       key={index}
@@ -233,7 +268,7 @@ export default function HomePage() {
             </div>
 
             <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {loading
+              {bestLoading
                 ? Array.from({ length: 4 }).map((_, index) => (
                     <div
                       key={index}
@@ -273,7 +308,7 @@ export default function HomePage() {
             </div>
 
             <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {loading
+              {newLoading
                 ? Array.from({ length: 4 }).map((_, index) => (
                     <div
                       key={index}

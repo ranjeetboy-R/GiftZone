@@ -1,6 +1,10 @@
 "use client";
 
-import { apiFetch, apiFetchStream } from "@/lib/api";
+import {
+    apiFetch,
+    apiFetchStream,
+    getCachedApiData
+} from "@/lib/api";
 import {
     ChevronLeft,
     ChevronRight,
@@ -41,69 +45,71 @@ const normalizeText = text =>
     text?.toLowerCase().trim().replace(/\s+/g, " ") || "";
 
 const page = () => {
-    const [products, setProducts] = useState([]);
+    const [initialProductData] = useState(
+        () => getCachedApiData('/api/products?all=true&page=1&limit=20')
+    );
+    const [products, setProducts] = useState(
+        () => initialProductData?.products || []
+    );
     const [query, setQuery] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(
+        () => initialProductData === undefined
+    );
 
     const [showProductForm, setShowProductForm] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [productForm, setProductForm] = useState(emptyProduct);
 
     const [page, setPage] = useState(1);
-    const [pages, setPages] = useState(1);
-    const [totalProducts, setTotalProducts] = useState(0);
+    const [pages, setPages] = useState(
+        () => Math.max(Number(initialProductData?.pagination?.pages) || 1, 1)
+    );
+    const [totalProducts, setTotalProducts] = useState(
+        () => Number(initialProductData?.pagination?.total) || 0
+    );
 
     const loadProducts = async (
         currentPage = page,
         searchQuery = query
     ) => {
-        try {
-            setLoading(true);
-            setProducts([]);
+        const params = new URLSearchParams();
 
-            const params = new URLSearchParams();
+        params.set('all', 'true');
+        params.set('page', String(currentPage));
+        params.set('limit', String(PAGE_SIZE));
 
-            params.set('all', 'true');
-            params.set(
-                'page',
-                String(currentPage)
-            );
-            params.set(
-                'limit',
-                String(PAGE_SIZE)
-            );
+        if (searchQuery.trim()) {
+            params.set('search', searchQuery.trim());
+        }
 
-            if (searchQuery.trim()) {
-                params.set(
-                    'search',
-                    searchQuery.trim()
-                );
-            }
+        const path = `/api/products?${params.toString()}`;
+        const cachedData = getCachedApiData(path);
 
-            const data = await apiFetch(
-                `/api/products?${params.toString()}`
-            );
-
-            const loadedProducts =
-                Array.isArray(data?.products)
-                    ? data.products
-                    : [];
-
-            const pagination =
-                data?.pagination || {};
+        const applyProducts = data => {
+            const loadedProducts = Array.isArray(data?.products)
+                ? data.products
+                : [];
+            const pagination = data?.pagination || {};
 
             setProducts(loadedProducts);
+            setTotalProducts(Number(pagination.total) || 0);
+            setPages(Math.max(Number(pagination.pages) || 1, 1));
+        };
 
-            setTotalProducts(
-                Number(pagination.total) || 0
-            );
+        setLoading(cachedData === undefined);
 
-            setPages(
-                Math.max(
-                    Number(pagination.pages) || 1,
-                    1
-                )
-            );
+        if (cachedData === undefined) {
+            setProducts([]);
+        } else {
+            applyProducts(cachedData);
+        }
+
+        try {
+            const data = await apiFetch(path, {
+                onUpdate: applyProducts
+            });
+
+            applyProducts(data);
         } catch (error) {
             console.error(
                 "Failed to load products:",
