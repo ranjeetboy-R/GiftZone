@@ -244,7 +244,7 @@ export default function UsersPage() {
       {/* Users table */}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px]">
+          <table className="w-full min-w-225">
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
                 <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -309,7 +309,7 @@ export default function UsersPage() {
                               {name}
                             </p>
 
-                            <p className="mt-0.5 max-w-[220px] truncate text-xs text-slate-500">
+                            <p className="mt-0.5 max-w-55 truncate text-xs text-slate-500">
                               {user.clerkId}
                             </p>
                           </div>
