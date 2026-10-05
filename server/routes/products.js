@@ -1,10 +1,12 @@
 import { Router } from 'express';
 
-import { listProducts, getProduct, getRelatedProducts, createProduct, updateProduct, deleteProduct, getCategories, listProductsWithStream } from '../controllers/products.js';
+import { listProducts, getProduct, getRelatedProducts, createProduct, updateProduct, deleteProduct, getCategories, listProductsWithStream, getBestProducts, getNewProducts } from '../controllers/products.js';
 import { requireAdmin } from '../middleware/admin.js';
 const router = Router();
 
 router.get('/', listProducts);
+router.get('/best', getBestProducts);
+router.get('/new', getNewProducts);
 router.get('/stream', listProductsWithStream);
 router.get('/categories', getCategories);
 router.get('/related/:category', getRelatedProducts);
