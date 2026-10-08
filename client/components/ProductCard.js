@@ -49,6 +49,7 @@ export default function ProductCard({ product }) {
             <div className="relative overflow-hidden">
                 <Link
                     href={`/product/${slug}`}
+                    prefetch={false}
                     className="relative block aspect-square w-full sm:aspect-4/3 lg:aspect-[1.08/1]"
                 >
                     {
@@ -99,6 +100,7 @@ export default function ProductCard({ product }) {
                 {/* Product Link */}
                 <Link
                     href={`/product/${slug}`}
+                    prefetch={false}
                     aria-label={`View ${product.name || 'product'}`}
                     className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 opacity-100 shadow-md transition-all duration-300 hover:bg-[#c92532] hover:text-white sm:bottom-3 sm:right-3 sm:h-9 sm:w-9 sm:translate-y-2 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100"
                 >
@@ -114,7 +116,7 @@ export default function ProductCard({ product }) {
                 </p>
 
                 {/* Product Name */}
-                <Link href={`/product/${slug}`}>
+                <Link href={`/product/${slug}`} prefetch={false}>
                     <h3 className="mt-1.5 min-h-10 line-clamp-2 text-sm font-extrabold leading-5 tracking-tight text-slate-900 transition-colors duration-200 hover:text-[#c92532] sm:text-sm">
                         {product.name}
                     </h3>

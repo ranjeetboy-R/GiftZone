@@ -31,28 +31,28 @@ const icons = {
   Headphones,
 };
 
-const categoryPath = "/api/products/categories?limit=8";
+const homepagePath = "/api/products/homepage?categoryLimit=8";
 
 export default function HomePage() {
   const { items } = useCart();
 
   const [best, setBest] = useState(
-    () => getCachedApiData("/api/products/best")?.products || []
+    () => getCachedApiData(homepagePath)?.best || []
   );
   const [newProduct, setNewProduct] = useState(
-    () => getCachedApiData("/api/products/new")?.products || []
+    () => getCachedApiData(homepagePath)?.newProducts || []
   );
   const [categories, setCategories] = useState(
-    () => getCachedApiData(categoryPath)?.categories || []
+    () => getCachedApiData(homepagePath)?.categories || []
   );
   const [categoryLoading, setCategoryLoading] = useState(
-    () => getCachedApiData(categoryPath) === undefined
+    () => getCachedApiData(homepagePath) === undefined
   );
   const [bestLoading, setBestLoading] = useState(
-    () => getCachedApiData("/api/products/best") === undefined
+    () => getCachedApiData(homepagePath) === undefined
   );
   const [newLoading, setNewLoading] = useState(
-    () => getCachedApiData("/api/products/new") === undefined
+    () => getCachedApiData(homepagePath) === undefined
   );
 
   useEffect(() => {
@@ -60,10 +60,12 @@ export default function HomePage() {
 
     async function loadHomepageData() {
       try {
-        const categoryData = await apiFetch(categoryPath, {
+        const homepageData = await apiFetch(homepagePath, {
           onUpdate: data => {
             if (!cancelled) {
               setCategories(data.categories || []);
+              setBest(data.best || []);
+              setNewProduct(data.newProducts || []);
             }
           }
         });
@@ -72,51 +74,25 @@ export default function HomePage() {
           return;
         }
 
-        setCategories(categoryData.categories || []);
+        setCategories(homepageData.categories || []);
+        setBest(homepageData.best || []);
+        setNewProduct(homepageData.newProducts || []);
       } catch (error) {
         if (!cancelled) {
           setCategories([]);
+          setBest([]);
+          setNewProduct([]);
         }
       } finally {
         if (!cancelled) {
           setCategoryLoading(false);
+          setBestLoading(false);
+          setNewLoading(false);
         }
       }
     }
 
     loadHomepageData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadProductList = async (path, setProducts, setListLoading) => {
-      try {
-        const data = await apiFetch(path, {
-          onUpdate: freshData => {
-            if (!cancelled) {
-              setProducts(freshData?.products || []);
-            }
-          }
-        });
-
-        if (!cancelled) {
-          setProducts(data?.products || []);
-        }
-      } catch (error) {
-      } finally {
-        if (!cancelled) {
-          setListLoading(false);
-        }
-      }
-    };
-
-    loadProductList("/api/products/best", setBest, setBestLoading);
-    loadProductList("/api/products/new", setNewProduct, setNewLoading);
 
     return () => {
       cancelled = true;
@@ -170,7 +146,7 @@ export default function HomePage() {
               <Image
                 src="/images/hero.png"
                 fill
-                sizes="100vw"
+                sizes="(max-width: 768px) 100vw, 720px"
                 alt="Hero banner"
                 className="select-none"
                 priority
@@ -481,7 +457,7 @@ export default function HomePage() {
 
                 <div className="relative p-5 md:p-8 lg:p-10">
                   <div className="grid grid-cols-2 gap-4">
-                    {businessProducts.map((product, index) => (
+                    {businessProducts.map((product) => (
                       <div
                         key={product._id}
                         className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5"
@@ -489,7 +465,7 @@ export default function HomePage() {
                         <img
                           src={product.images?.[0]}
                           alt={product.name || "Featured product"}
-                          loading={index < 2 ? "eager" : "lazy"}
+                          loading="lazy"
                           className="h-40 w-full object-cover transition duration-500 group-hover:scale-105 md:h-48"
                         />
 

@@ -82,6 +82,9 @@ productSchema.index({
   createdAt: -1
 });
 
+productSchema.index({ active: 1, isFeatured: 1, rating: -1, reviews: -1, createdAt: -1 });
+productSchema.index({ active: 1, isNewArrival: 1, createdAt: -1 });
+
 productSchema.index({
   name: 'text',
   description: 'text'
