@@ -6,6 +6,13 @@ import {
 } from "../utils/productCache.js";
 import redis from "../config/redis.js";
 
+const productCardFields =
+  "name slug price sizes description compareAtPrice images category rating reviews stock isFeatured isNewArrival active";
+
+const setPublicCache = (res, seconds = 300) => {
+  res.set("Cache-Control", `public, max-age=60, s-maxage=${seconds}, stale-while-revalidate=86400`);
+};
+
 // List product without stream
 export async function listProducts(req, res) {
   try {
@@ -108,9 +115,7 @@ export async function listProducts(req, res) {
 
     const [products, total] = await Promise.all([
       Product.find(filter)
-        .select(
-          "name slug price sizes description compareAtPrice images category rating reviews stock isFeatured isNewArrival active",
-        )
+        .select(productCardFields)
         .sort(sort)
         .skip(skip)
         .limit(limit)
@@ -150,20 +155,23 @@ export async function getBestProducts(req, res) {
     const cachedData = await redis.get(cacheKey);
 
     if (cachedData) {
+      setPublicCache(res);
       return res.status(200).json({
         products: cachedData,
       });
     }
 
-    const products = await Product.aggregate([
-      { $match: { isFeatured: true } },
-      { $sample: { size: 24 } },
-    ]);
+    const products = await Product.find({ active: true, isFeatured: true })
+      .select(productCardFields)
+      .sort({ rating: -1, reviews: -1, createdAt: -1 })
+      .limit(24)
+      .lean();
 
     await redis.set(cacheKey, products, {
       ex: 60 * 60,
     });
 
+    setPublicCache(res);
     return res.status(200).json({
       products,
     });
@@ -182,20 +190,23 @@ export async function getNewProducts(req, res) {
     const cachedProducts = await redis.get(cacheKey);
 
     if (cachedProducts) {
+      setPublicCache(res);
       return res.status(200).json({
         products: cachedProducts,
       });
     }
 
-    const products = await Product.aggregate([
-      { $match: { isNewArrival: true } },
-      { $sample: { size: 24 } },
-    ]);
+    const products = await Product.find({ active: true, isNewArrival: true })
+      .select(productCardFields)
+      .sort({ createdAt: -1 })
+      .limit(24)
+      .lean();
 
     await redis.set(cacheKey, products, {
       ex: 60 * 60,
     });
 
+    setPublicCache(res);
     return res.status(200).json({
       products,
     });
@@ -203,6 +214,64 @@ export async function getNewProducts(req, res) {
     return res.status(500).json({
       message: error.message,
     });
+  }
+}
+
+// Homepage data is intentionally bundled so a new visitor does not wait for
+// three separate browser-to-API round trips before seeing the catalog.
+export async function getHomepageProducts(req, res) {
+  try {
+    const limit = Math.min(Math.max(Number(req.query.categoryLimit) || 8, 1), 100);
+    const version = await getProductCacheVersion();
+    const cacheKey = `products:homepage:v${version}:${limit}`;
+    const cachedData = await redis.get(cacheKey);
+
+    if (cachedData) {
+      setPublicCache(res, 600);
+      return res.status(200).json(cachedData);
+    }
+
+    const categoryPipeline = [
+      {
+        $match: {
+          active: true,
+          category: { $exists: true, $nin: ["", null] },
+        },
+      },
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+      { $limit: limit },
+    ];
+
+    const [categories, best, newProducts] = await Promise.all([
+      Product.aggregate(categoryPipeline),
+      Product.find({ active: true, isFeatured: true })
+        .select(productCardFields)
+        .sort({ rating: -1, reviews: -1, createdAt: -1 })
+        .limit(24)
+        .lean(),
+      Product.find({ active: true, isNewArrival: true })
+        .select(productCardFields)
+        .sort({ createdAt: -1 })
+        .limit(24)
+        .lean(),
+    ]);
+
+    const result = {
+      categories: categories.map((item) => ({
+        slug: item._id,
+        name: formatCategoryName(item._id),
+        count: item.count,
+      })),
+      best,
+      newProducts,
+    };
+
+    await redis.set(cacheKey, result, { ex: 60 * 60 });
+    setPublicCache(res, 600);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 }
 

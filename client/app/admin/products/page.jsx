@@ -388,7 +388,6 @@ const page = () => {
                                                                 product
                                                                     .images[0]
                                                             }
-                                                            target="_blank"
                                                             rel="noopener noreferrer"
                                                         >
                                                             <img
