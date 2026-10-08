@@ -1,0 +1,20 @@
+name: Keep Render API awake
+
+on:
+  schedule:
+    # Render Free services sleep after 15 minutes without traffic. Run off the
+    # top of the hour to reduce the chance of a delayed scheduled job.
+    - cron: '7,17,27,37,47,57 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Ping API health endpoint
+        run: >-
+          curl --fail --silent --show-error --retry 2 --max-time 30
+          https://giftzone-mhug.onrender.com/api/health
