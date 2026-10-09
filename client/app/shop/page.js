@@ -15,7 +15,7 @@ import {
 } from '@/lib/api';
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 
-const PAGE_SIZE = 30;
+const PAGE_SIZE = 20;
 
 const getCatalogPath = (page, searchParams) => {
   const params = new URLSearchParams();
@@ -618,17 +618,12 @@ export default function ShopPage() {
     <>
       <Header cartCount={cartCount} />
 
-      <main className="section-pad">
+      <main className="mt-5">
         <div className="container-width">
 
           {/* Page Heading */}
           <div className="mb-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#c92532]">
-                  Shop
-                </p>
-
                 <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">
                   Explore Our Products
                 </h1>
@@ -641,14 +636,6 @@ export default function ShopPage() {
                   experience.
                 </p>
               </div>
-
-              <div className="text-sm text-slate-500">
-                <strong className="font-extrabold text-slate-900">
-                  {totalProducts}
-                </strong>{' '}
-                products found
-              </div>
-            </div>
           </div>
 
           {/* Search */}
@@ -699,7 +686,7 @@ export default function ShopPage() {
           <div className="gap-6 flex flex-col">
 
             {/* Filters */}
-            <aside className="h-fit rounded-xl border border-slate-200 bg-white p-4 sm:p-5 lg:sticky lg:top-28">
+            <aside className="h-fit rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
               <div className="flex items-center justify-between">
                 <h2 className="font-bold text-slate-900">
                   Filters
@@ -911,7 +898,7 @@ export default function ShopPage() {
 
                   {/* Pagination */}
                   {!wishlistOnly && pages > 1 && (
-                    <div className="mt-16 flex w-full justify-center px-2">
+                    <div className="my-16 flex w-full justify-center px-2">
                       <div className="flex max-w-full items-center justify-center gap-1 overflow-x-auto py-1 scrollbar-hide sm:gap-2">
                         {/* Previous */}
                         <button
