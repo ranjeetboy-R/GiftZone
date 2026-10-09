@@ -36,7 +36,8 @@ const emptyProduct = {
     isFeatured: false,
     isNewArrival: false,
     active: true,
-    images: []
+    images: [],
+    imageAssets: []
 };
 
 const PAGE_SIZE = 20;
@@ -158,6 +159,7 @@ const page = () => {
             active:
                 product.active !== false,
             images: product.images || [],
+            imageAssets: product.imageAssets || [],
             sizes: product.sizes || []
         });
 

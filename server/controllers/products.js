@@ -5,6 +5,19 @@ import {
   invalidateProductCache,
 } from "../utils/productCache.js";
 import redis from "../config/redis.js";
+import { normalizeImageAssets, queueOrDeleteUnusedAssets } from '../utils/productImages.js';
+
+const PRODUCT_FIELDS = ['name', 'slug', 'description', 'price', 'compareAtPrice', 'category', 'images', 'imageAssets', 'sizes', 'stock', 'rating', 'reviews', 'isFeatured', 'isNewArrival', 'active'];
+
+function pickProductFields(body) {
+  return Object.fromEntries(PRODUCT_FIELDS.filter(key => body[key] !== undefined).map(key => [key, body[key]]));
+}
+
+function normalizeNumber(value, field) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) throw new Error(`${field} must be a valid number`);
+  return number;
+}
 
 const productCardFields =
   "name slug price sizes description compareAtPrice images category rating reviews stock isFeatured isNewArrival active";
@@ -579,10 +592,9 @@ export async function getProduct(req, res) {
 }
 
 export async function createProduct(req, res) {
+  let uploadedAssets = [];
   try {
-    const payload = {
-      ...req.body,
-    };
+    const payload = pickProductFields(req.body);
 
     if (!payload.name) {
       return res.status(400).json({
@@ -608,19 +620,25 @@ export async function createProduct(req, res) {
       });
     }
 
-    payload.price = Number(payload.price);
-    payload.stock = Number(payload.stock || 0);
-    payload.rating = Number(payload.rating || 0);
-    payload.reviews = Number(payload.reviews || 0);
+    payload.price = normalizeNumber(payload.price, 'Price');
+    payload.stock = normalizeNumber(payload.stock || 0, 'Stock');
+    payload.rating = normalizeNumber(payload.rating || 0, 'Rating');
+    payload.reviews = normalizeNumber(payload.reviews || 0, 'Reviews');
 
     if (payload.compareAtPrice !== undefined) {
-      payload.compareAtPrice = Number(payload.compareAtPrice);
+      payload.compareAtPrice = normalizeNumber(payload.compareAtPrice, 'Compare at price');
     }
 
     if (payload.sizes !== undefined) {
       payload.sizes = Array.isArray(payload.sizes)
         ? payload.sizes.map((size) => String(size).trim()).filter(Boolean)
         : [];
+    }
+
+    if (payload.images !== undefined) {
+      payload.images = payload.images.filter(image => typeof image === 'string' && image.length <= 2048);
+      payload.imageAssets = normalizeImageAssets(payload.images, payload.imageAssets);
+      uploadedAssets = payload.imageAssets;
     }
 
     const product = await Product.create(payload);
@@ -631,6 +649,9 @@ export async function createProduct(req, res) {
       product,
     });
   } catch (error) {
+    // The upload endpoint may have succeeded before validation or persistence
+    // failed. These IDs came from this admin request, never from a delete API.
+    await queueOrDeleteUnusedAssets(uploadedAssets);
     res.status(400).json({
       message:
         error.code === 11000 ? "Product slug already exists" : error.message,
@@ -639,33 +660,35 @@ export async function createProduct(req, res) {
 }
 
 export async function updateProduct(req, res) {
+  let uploadedAssets = [];
   try {
-    const payload = {
-      ...req.body,
-    };
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid product ID' });
+    const existing = await Product.findById(req.params.id).select('imageAssets').lean();
+    if (!existing) return res.status(404).json({ message: 'Product not found' });
+    const payload = pickProductFields(req.body);
 
     delete payload._id;
     delete payload.createdAt;
     delete payload.updatedAt;
 
     if (payload.price !== undefined) {
-      payload.price = Number(payload.price);
+      payload.price = normalizeNumber(payload.price, 'Price');
     }
 
     if (payload.stock !== undefined) {
-      payload.stock = Number(payload.stock);
+      payload.stock = normalizeNumber(payload.stock, 'Stock');
     }
 
     if (payload.rating !== undefined) {
-      payload.rating = Number(payload.rating);
+      payload.rating = normalizeNumber(payload.rating, 'Rating');
     }
 
     if (payload.reviews !== undefined) {
-      payload.reviews = Number(payload.reviews);
+      payload.reviews = normalizeNumber(payload.reviews, 'Reviews');
     }
 
     if (payload.compareAtPrice !== undefined) {
-      payload.compareAtPrice = Number(payload.compareAtPrice);
+      payload.compareAtPrice = normalizeNumber(payload.compareAtPrice, 'Compare at price');
     }
 
     if (payload.sizes !== undefined) {
@@ -674,23 +697,30 @@ export async function updateProduct(req, res) {
         : [];
     }
 
+    let removedAssets = [];
+    if (payload.images !== undefined) {
+      payload.images = payload.images.filter(image => typeof image === 'string' && image.length <= 2048);
+      const existingByUrl = new Map((existing.imageAssets || []).map(asset => [asset.url, asset]));
+      const submittedAssets = Array.isArray(payload.imageAssets) ? payload.imageAssets : [];
+      const submittedByUrl = new Map(submittedAssets.map(asset => [asset?.url, asset]));
+      payload.imageAssets = payload.images.map(url => existingByUrl.get(url) || normalizeImageAssets([url], [submittedByUrl.get(url)])[0]);
+      uploadedAssets = payload.imageAssets.filter(asset => !existingByUrl.has(asset.url));
+      removedAssets = (existing.imageAssets || []).filter(asset => !payload.imageAssets.some(next => next.publicId === asset.publicId));
+    }
+
     const product = await Product.findByIdAndUpdate(req.params.id, payload, {
       returnDocument: "after",
       runValidators: true,
     });
 
-    if (!product) {
-      return res.status(404).json({
-        message: "Product not found",
-      });
-    }
-
     await invalidateProductCache();
+    await queueOrDeleteUnusedAssets(removedAssets);
     res.json({
       message: "Product updated successfully",
       product,
     });
   } catch (error) {
+    await queueOrDeleteUnusedAssets(uploadedAssets);
     res.status(400).json({
       message:
         error.code === 11000 ? "Product slug already exists" : error.message,
@@ -709,6 +739,7 @@ export async function deleteProduct(req, res) {
       });
     }
 
+    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ success: false, message: 'Invalid product id' });
     const product = await Product.findByIdAndDelete(id);
 
     if (!product) {
@@ -719,6 +750,7 @@ export async function deleteProduct(req, res) {
     }
 
     await invalidateProductCache();
+    await queueOrDeleteUnusedAssets(product.imageAssets || []);
 
     res.json({
       success: true,
