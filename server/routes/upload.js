@@ -3,6 +3,7 @@ import multer from 'multer';
 
 import cloudinary from '../config/cloudinary.js';
 import { requireAdmin } from '../middleware/admin.js';
+import { hasValidImageSignature } from '../utils/imageValidation.js';
 
 const router = Router();
 
@@ -14,7 +15,7 @@ const upload = multer({
     },
 
     fileFilter: (req, file, callback) => {
-        if (!file.mimetype.startsWith('image/')) {
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
             return callback(
                 new Error('Only image files are allowed')
             );
@@ -34,6 +35,9 @@ router.post(
                 return res.status(400).json({
                     message: 'Image is required'
                 });
+            }
+            if (!hasValidImageSignature(req.file)) {
+                return res.status(400).json({ message: 'The uploaded file is not a valid supported image.' });
             }
 
             const result = await new Promise(
@@ -60,8 +64,9 @@ router.post(
                 publicId: result.public_id
             });
         } catch (error) {
+            console.error('Product image upload failed:', error);
             res.status(500).json({
-                message: error.message
+                message: 'Image upload failed'
             });
         }
     }

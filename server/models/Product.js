@@ -37,6 +37,16 @@ const productSchema = new mongoose.Schema({
     type: [String],
     default: []
   },
+  // Public IDs are kept separately from presentation URLs so destructive
+  // Cloudinary operations never need to guess an identifier from a URL.
+  imageAssets: {
+    type: [{
+      url: { type: String, required: true },
+      publicId: { type: String, required: true },
+      resourceType: { type: String, default: 'image' }
+    }],
+    default: []
+  },
   sizes: {
     type: [String],
     default: []

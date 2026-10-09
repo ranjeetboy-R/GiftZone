@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import cloudinary from '../config/cloudinary.js';
+import { hasValidImageSignature } from '../utils/imageValidation.js';
 
 // Shipping charges are waived when the order meets this minimum value.
 const SHIPPING_FEE = 0;
@@ -9,6 +10,7 @@ const FREE_SHIPPING_MINIMUM = 299;
 
 // Validate the purchase, reserve stock, and create a pending order.
 export async function createOrder(req, res) {
+  let uploadedProof;
   try {
     const orderData = JSON.parse(req.body.order || '{}');
 
@@ -49,6 +51,9 @@ export async function createOrder(req, res) {
         message: 'Payment screenshot is required.'
       });
     }
+    if (!hasValidImageSignature(req.file)) {
+      return res.status(400).json({ message: 'Payment screenshot must be a valid JPEG, PNG, or WebP image.' });
+    }
 
     // Upload payment screenshot to Cloudinary.
     const result = await new Promise((resolve, reject) => {
@@ -69,6 +74,7 @@ export async function createOrder(req, res) {
         )
         .end(req.file.buffer);
     });
+    uploadedProof = result;
 
     const paymentProofUrl = result?.secure_url;
 
@@ -213,13 +219,13 @@ export async function createOrder(req, res) {
       order
     });
   } catch (error) {
-    console.error(
-      'Create order error:',
-      error
-    );
+    if (uploadedProof?.public_id) {
+      cloudinary.uploader.destroy(uploadedProof.public_id, { resource_type: 'image' }).catch(() => console.error('Payment-proof orphan cleanup failed'));
+    }
+    console.error('Create order failed');
 
     res.status(400).json({
-      message: error.message
+      message: 'Unable to create order.'
     });
   }
 }

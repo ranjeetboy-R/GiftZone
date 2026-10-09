@@ -21,6 +21,7 @@ const emptyProduct = {
     isNewArrival: false,
     active: true,
     images: [],
+    imageAssets: [],
     sizes: []
 };
 
@@ -99,6 +100,7 @@ const ProductForm = ({
             showError("");
 
             const uploadedImages = [];
+            const uploadedAssets = [];
 
             for (const file of files) {
                 if (!file.type.startsWith("image/")) {
@@ -128,6 +130,11 @@ const ProductForm = ({
                 }
 
                 uploadedImages.push(data.url);
+                uploadedAssets.push({
+                    url: data.url,
+                    publicId: data.publicId,
+                    resourceType: "image"
+                });
             }
 
             setProductForm((current) => ({
@@ -135,7 +142,8 @@ const ProductForm = ({
                 images: [
                     ...current.images,
                     ...uploadedImages
-                ]
+                ],
+                imageAssets: [...(current.imageAssets || []), ...uploadedAssets]
             }));
 
             showSuccess(
@@ -162,7 +170,10 @@ const ProductForm = ({
             ...current,
             images: current.images.filter(
                 (_, imageIndex) => imageIndex !== index
-            )
+                ),
+                imageAssets: (current.imageAssets || []).filter(
+                    asset => asset.url !== current.images[index]
+                )
         }));
     };
 
@@ -343,6 +354,8 @@ const ProductForm = ({
 
                 images:
                     productForm.images,
+
+                imageAssets: productForm.imageAssets || [],
 
                 sizes:
                     Array.isArray(
