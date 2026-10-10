@@ -873,9 +873,7 @@ export default function ShopPage() {
               ) : loading ? (
                 <div className="mt-6">
                   <LoadingGrid
-                    count={
-                      PAGE_SIZE
-                    }
+                    count={8}
                   />
                 </div>
               ) : visibleProducts.length ? (

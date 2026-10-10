@@ -1,6 +1,6 @@
 import Link from 'next/link';
 export default function Footer() {
-  return <footer className="bg-[#0d1a2a] text-white">
+  return <footer className="bg-[#0d1a2a] mt-10 text-white">
   <div className="container-width grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-4">
     <div>
       <div className="text-2xl font-extrabold">🎁 Gift <span className="text-[#f08b93]">Zone</span>
