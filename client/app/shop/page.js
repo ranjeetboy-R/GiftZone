@@ -652,7 +652,7 @@ export default function ShopPage() {
                 onKeyDown={
                   handleSearchKeyDown
                 }
-                placeholder={`Search in ${totalProducts} products...`}
+                placeholder={`Search in ${totalProducts + 1} products...`}
                 aria-label="Search products"
                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 pr-24 text-sm text-slate-800 shadow-sm outline-none transition focus:border-[#c92532] focus:ring-4 focus:ring-[#c92532]/10"
               />
