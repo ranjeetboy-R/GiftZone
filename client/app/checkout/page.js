@@ -1,5 +1,6 @@
 "use client";
 
+import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -10,9 +11,9 @@ import {
   Check,
   CheckCircle2,
   Clipboard,
+  Copy,
   CreditCard,
   FileImage,
-  IndianRupee,
   LockKeyhole,
   MapPin,
   PackageCheck,
@@ -589,22 +590,21 @@ export default function CheckoutPage() {
                           </p>
 
                           <p className="mt-1 text-xs leading-5 text-slate-600">
-                            Pay exactly{" "}
+                            QR Code या नीचे दिए गए Bank Details का उपयोग करके
+                            बिल्कुल{" "}
                             <strong className="text-[#c92532]">
                               ₹{total.toLocaleString("en-IN")}
                             </strong>{" "}
-                            using the QR code or bank details below. Then submit
-                            your UTR and payment screenshot.
+                            का भुगतान करें। इसके बाद अपना UTR और Payment
+                            Screenshot submit करें।
                           </p>
                         </div>
                       </div>
                     </div>
-
-                    <div className="flex flex-col border border-slate-200 md:hidden rounded-2xl p-5 bg-slate-50 mt-5">
-                      <p className="font-medium">Pay Securely via UPI</p>
-                      <button
-                        type="button"
-                        className="group relative w-full mt-5 overflow-hidden rounded-2xl
+                    <button
+                      type="button"
+                      onClick={() => copyPaymentValue(payment.upi)}
+                      className="flex items-center justify-center gap-2 group relative w-full mt-5 overflow-hidden rounded-2xl
                                                         bg-linear-to-r from-amber-400 via-yellow-300 to-amber-400
                                                         px-6 py-3.5
                                                         font-bold text-gray-900
@@ -612,103 +612,54 @@ export default function CheckoutPage() {
                                                         transition-all duration-300
                                                         hover:-translate-y-0.5
                                                         hover:shadow-[0_12px_35px_rgba(245,158,11,0.45)]
-                                                        active:scale-[0.97] "
-                                onClick={() => {
-                                const amount = Number(subtotal);
-
-                                if (!Number.isFinite(amount) || amount <= 0) {
-                                    alert("Invalid payment amount");
-                                    return;
-                                }
-
-                                const upiParams = new URLSearchParams({
-                                    pa: "pandeyvisu995-3@okaxis",
-                                    pn: "SellZone",
-                                    am: amount.toFixed(2),
-                                    cu: "INR",
-                                    tn: "SellZone Order Payment",
-                                });
-
-                                window.location.href = `upi://pay?${upiParams.toString()}`;
-                                }}
-                      >
-                        {/* Shine effect */}
-                        <span
-                          className=" absolute inset-0 -translate-x-full
-                                                            bg-linear-to-r from-transparent via-white/50 to-transparent
-                                                            transition-transform duration-700
-                                                            group-hover:translate-x-full  "
-                        />
-
-                        {/* Button content */}
-                        <span className="relative flex items-center justify-center gap-2">
-                          <IndianRupee size={15} />
-                          {subtotal}
-                          <span>Pay Now</span>
-
-                          <svg
-                            className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <path d="M5 12h14" />
-                            <path d="m13 6 6 6-6 6" />
-                          </svg>
-                        </span>
-                      </button>
-
-                      <p className="text-xs mt-5 text-slate-400 text-center">
-                        Having trouble with payment? Please try another UPI app
-                        like Google Pay, PhonePe, or Paytm.
-                      </p>
-                    </div>
+                                                        active:scale-[0.97]"
+                    >
+                      <Copy size={17} /> Copy UPI ID
+                    </button>
 
                     <div className="mt-6 grid gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                      <div
+                        id="payment-qr-section"
+                        className="rounded-2xl border border-slate-200 bg-slate-50 p-5 ring-2 ring-[#c92532]/20"
+                      >
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
                               Scan & Pay
                             </p>
-
                             <h3 className="mt-1 font-extrabold text-slate-900">
                               Payment QR
                             </h3>
+                            <p className="mt-1 text-sm font-bold text-[#c92532]">
+                              Amount: ₹{total.toLocaleString("en-IN")}
+                            </p>
                           </div>
-
                           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#c92532] shadow-sm">
                             <QrCode size={18} />
                           </div>
                         </div>
 
-                        <div className="mt-5 flex min-h-65 items-center justify-center rounded-2xl border border-slate-200 bg-white p-5">
+                        <div className="mt-5 flex min-h- flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-5">
                           {paymentLoading ? (
                             <div className="h-52 w-52 animate-pulse rounded-xl bg-slate-100" />
-                          ) : payment.qrImage ? (
-                            <img
-                              src={payment.qrImage}
-                              alt="Gift Zone payment QR"
-                              className="h-52 w-52 rounded-xl object-contain"
-                            />
                           ) : (
-                            <div className="text-center">
-                              <QrCode
-                                size={42}
-                                className="mx-auto text-slate-300"
-                              />
+                            (() => {
+                              const formattedAmount = Number.isInteger(total)
+                                ? total.toString()
+                                : Number(total).toFixed(2);
+                              const upiString = `upi://pay?pa=${payment.upi.trim()}&pn=${encodeURIComponent(payment.accountName.trim())}&am=${formattedAmount}&cu=INR&tn=SellZone Order`;
 
-                              <p className="mt-3 text-sm font-semibold text-slate-500">
-                                Payment QR unavailable
-                              </p>
-                            </div>
+                              return (
+                                <div className="flex flex-col items-center">
+                                  {/* Dynamic QR - Amount ke saath */}
+                                  <div className="rounded-xl bg-white p-2 shadow-sm border border-slate-100">
+                                    <QRCodeSVG value={upiString} size={208} />
+                                  </div>
+                                </div>
+                              );
+                            })()
                           )}
                         </div>
-
-                        <p className="mt-4 text-center text-xs leading-5 text-slate-400">
-                          Scan the QR code with your preferred UPI app.
-                        </p>
                       </div>
 
                       <div className="rounded-2xl border border-slate-200 bg-white p-5">
